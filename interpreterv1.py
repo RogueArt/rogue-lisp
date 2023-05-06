@@ -26,7 +26,9 @@ def get_sample_programs():
                         '(field name "unknown")',
                         '(field _awesome true)',
                         '(field obj_ref_field_puppy null)',
-                        '(method main () (print "I am main!"))',
+                        # '(method main () (set foo_123 20))',
+                        '(method main () (set foo_123 (+ 20 50)))',
+                        # '(method main () (print "The value is" foo_123 "and" name "and" _awesome "and" obj_ref_field_puppy (% 3 2)))',
                         # '(method add (a b) (+ a b))',
                         ')'],
         # 'program2': ['(class main',
@@ -98,9 +100,14 @@ class ObjectDefinition:
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
-    def __run_statement(self, statement):
+    def __run_statement(self, statement: List[any], parameters: List[str]):
+        # TO-DO: Make this into a private variable
+        print(statement)
+
         if self.is_a_print_statement(statement):
             result = self.__execute_print_statement(statement)
+        elif self.is_a_set_statement(statement):
+            result = self.__execute_set_statement(statement)
         elif self.is_an_input_statement(statement):
             result = self.__execute_input_statement(statement)
         elif self.is_a_call_statement(statement):
@@ -119,6 +126,33 @@ class ObjectDefinition:
     def is_a_print_statement(self, statement):
         return statement[0] == InterpreterBase.PRINT_DEF
 
+    def is_a_set_statement(self, statement):
+        return statement[0] == InterpreterBase.SET_DEF
+
+    # TO-DO: Implement scope look up
+    def set_field_value(self, field_name, val):
+        self.fields[field_name] = val
+
+    # TO-DO: Have ObjectDefinition inherit this
+    def __parse_str_into_python_value(self, value: str):
+        if value == InterpreterBase.TRUE_DEF:
+            return True
+        elif value == InterpreterBase.FALSE_DEF:
+            return False
+        elif value == InterpreterBase.NULL_DEF:
+            return None
+        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
+            return value[1:-1]
+        else:
+            return int(value)
+
+    def __execute_set_statement(self, statement):
+        field_name, val = statement[1], statement[2]
+        if isinstance(val, list):
+            val = self.evaluate_expression(val)
+        val = self.__parse_str_into_python_value(val)
+        self.set_field_value(field_name, val)
+        return
 
     def is_an_input_statement(self, statement):
         return False
@@ -136,11 +170,13 @@ class ObjectDefinition:
         return False
 
     def is_a_begin_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.BEGIN_DEF
 
     def evaluate_expression(self, expression):
-        if len(expression) == 3:
+        if not isinstance(expression, int) and len(expression) == 3:
             operator, operand1, operand2 = expression
+            operand1 = self.__parse_str_into_python_value(operand1)
+            operand2 = self.__parse_str_into_python_value(operand2)
             # TO-DO: Handle variable names for operands
 
             match operator:
@@ -168,9 +204,9 @@ class ObjectDefinition:
                     return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
             # print('Expression:', expression)
 
-        elif len(expression) == 1:
+        elif isinstance(expression, int):
             operand = expression
-        return int(operand)
+            return int(operand)
 
     def __execute_print_statement(self, statement):
         # Three cases to handle:
@@ -226,7 +262,7 @@ class ClassDefinition:
     def instantiate_object(self):
         obj = ObjectDefinition(self.interpreter, copy.deepcopy(
             self.methods), copy.deepcopy(self.fields))
-        
+
         # To-DO: Evaluate if this is a better approach below
         # for method_name, method_def in self.methods.items():
         #     obj.add_method(method_name, method_def)
@@ -270,8 +306,8 @@ class Interpreter(InterpreterBase):
             fields = self.__get_fields_for_class(class_def)
 
             # Create a new class with given methods and fields
-            self.class_definitions[class_name] = ClassDefinition(
-                class_name, methods, fields)
+            self.class_definitions[class_name] = ClassDefinition(super(),
+                                                                 class_name, methods, fields)
 
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
