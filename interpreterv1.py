@@ -1,5 +1,6 @@
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
+from pprint import pprint
 
 
 class ObjectDefinition:
@@ -12,6 +13,12 @@ class ObjectDefinition:
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement)
         return result
+
+    def __find_method(self, method_name):
+        pass
+
+    def __run_statement(self, statement):
+        pass
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -53,6 +60,27 @@ class ObjectDefinition:
 
     def is_a_begin_statement(self, statement):
         return False
+
+    def __execute_print_statement(self, statement):
+        pass
+
+    def __execute_input_statement(self, statement):
+        pass
+
+    def __execute_call_statement(self, statement):
+        pass
+
+    def __execute_while_statement(self, statement):
+        pass
+
+    def __execute_if_statement(self, statement):
+        pass
+
+    def __execute_return_statement(self, statement):
+        pass
+
+    def __execute_all_sub_statements_of_begin_statement(self, statement):
+        pass
 
 
 class ClassDefinition:
