@@ -135,6 +135,40 @@ class ObjectDefinition:
     def is_a_begin_statement(self, statement):
         return False
 
+    def evaluate_expression(self, expression):
+        if len(expression) == 3:
+            operator, operand1, operand2 = expression
+            # TO-DO: Handle variable names for operands
+
+            match operator:
+                case '+':
+                    return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
+                case '-':
+                    return self.evaluate_expression(operand1) - self.evaluate_expression(operand2)
+                case '*':
+                    return self.evaluate_expression(operand1) * self.evaluate_expression(operand2)
+                case '/':
+                    return self.evaluate_expression(operand1) // self.evaluate_expression(operand2)
+                case '%':
+                    return self.evaluate_expression(operand1) % self.evaluate_expression(operand2)
+                case '==':
+                    return self.evaluate_expression(operand1) == self.evaluate_expression(operand2)
+                case '!=':
+                    return self.evaluate_expression(operand1) != self.evaluate_expression(operand2)
+                case '>':
+                    return self.evaluate_expression(operand1) > self.evaluate_expression(operand2)
+                case '<':
+                    return self.evaluate_expression(operand1) < self.evaluate_expression(operand2)
+                case '>=':
+                    return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
+                case '<=':
+                    return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
+            # print('Expression:', expression)
+
+        elif len(expression) == 1:
+            operand = expression
+        return int(operand)
+
     def __execute_print_statement(self, statement):
         pass
 
