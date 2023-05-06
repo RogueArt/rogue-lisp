@@ -1,3 +1,6 @@
+# Personal
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -128,5 +131,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# mac stuff *shakes fist*
+# mac stuff (shakes fist in anger)
 .DS_Store
+
+# generated from test harness
+results.json
