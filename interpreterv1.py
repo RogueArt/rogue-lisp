@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Dict
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from pprint import pprint
+import copy
 
 # DEBUGGING ONLY - PLEASE DO NOT PUSH:
 
@@ -77,21 +78,23 @@ class MethodDefinition:
 
 
 class ObjectDefinition:
-    def __init__(self, _):
-        pass
+    def __init__(self, interpreter, methods: Dict[str, MethodDefinition], fields: Dict[str, any]):
+        self.interpreter = interpreter
+        self.methods = methods
+        self.fields = fields
 
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name, parameters):
+    def call_method(self, method_name: str, parameters: List[str]):
         method = self.__find_method(method_name)
         statement = method.get_top_level_statement()
-        result = self.__run_statement(statement)
+        result = self.__run_statement(statement, parameters)
         return result
 
-    def __find_method(self, method_name):
-        pass
+    def __find_method(self, method_name: str) -> MethodDefinition:
+        return self.methods[method_name]
 
-    def __run_statement(self, statement):
-        pass
+    def __get_value_from_variable(self, variable_name: str) -> any:
+        return self.fields[variable_name]
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -114,7 +117,8 @@ class ObjectDefinition:
         return result
 
     def is_a_print_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.PRINT_DEF
+
 
     def is_an_input_statement(self, statement):
         return False
@@ -134,8 +138,62 @@ class ObjectDefinition:
     def is_a_begin_statement(self, statement):
         return False
 
+    def evaluate_expression(self, expression):
+        if len(expression) == 3:
+            operator, operand1, operand2 = expression
+            # TO-DO: Handle variable names for operands
+
+            match operator:
+                case '+':
+                    return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
+                case '-':
+                    return self.evaluate_expression(operand1) - self.evaluate_expression(operand2)
+                case '*':
+                    return self.evaluate_expression(operand1) * self.evaluate_expression(operand2)
+                case '/':
+                    return self.evaluate_expression(operand1) // self.evaluate_expression(operand2)
+                case '%':
+                    return self.evaluate_expression(operand1) % self.evaluate_expression(operand2)
+                case '==':
+                    return self.evaluate_expression(operand1) == self.evaluate_expression(operand2)
+                case '!=':
+                    return self.evaluate_expression(operand1) != self.evaluate_expression(operand2)
+                case '>':
+                    return self.evaluate_expression(operand1) > self.evaluate_expression(operand2)
+                case '<':
+                    return self.evaluate_expression(operand1) < self.evaluate_expression(operand2)
+                case '>=':
+                    return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
+                case '<=':
+                    return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
+            # print('Expression:', expression)
+
+        elif len(expression) == 1:
+            operand = expression
+        return int(operand)
+
     def __execute_print_statement(self, statement):
-        pass
+        # Three cases to handle:
+        # 1. Value - we can format and print this directly
+        # 2. Variable - we must do a lookup for the variable name
+        # 3. Expression - we must do a calculation for this value
+
+        # TO-DO: Refactor
+        # TO-DO: Handle function calls
+        formatted_arguments = []
+        for arg in statement[1:]:
+            if isinstance(arg, list):
+                formatted_arguments.append(str(self.evaluate_expression(arg)))
+            elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
+                formatted_arguments.append(arg[1:-1])
+            elif isinstance(arg, str) and arg.lower() in ['true', 'false', 'null'] or arg.isnumeric():
+                formatted_arguments.append(str(arg))
+            else:
+                formatted_arguments.append(
+                    str(self.__get_value_from_variable(arg)))
+
+        self.interpreter.output(' '.join(formatted_arguments))
+        return
 
     def __execute_input_statement(self, statement):
         pass
@@ -158,18 +216,22 @@ class ObjectDefinition:
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, name, methods, fields):
+    def __init__(self, interpreter, name, methods, fields):
+        self.interpreter = interpreter
         self.name = name
         self.methods = methods
         self.fields = fields
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition()
-        for method in self.methods:
-            obj.add_method(method)
-        for field in self.fields:
-            obj.add_field(field.name(), field.initial_value())
+        obj = ObjectDefinition(self.interpreter, copy.deepcopy(
+            self.methods), copy.deepcopy(self.fields))
+        
+        # To-DO: Evaluate if this is a better approach below
+        # for method_name, method_def in self.methods.items():
+        #     obj.add_method(method_name, method_def)
+        # for field_name, field_value in self.fields.items():
+        #     obj.add_field(field_name, field_value)
         return obj
 
 
@@ -188,15 +250,14 @@ class Interpreter(InterpreterBase):
             print('Parsing failed. Please check the input file.')
             return
         else:
-            # pprint(parsed_program)
             fn(parsed_program)
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
         class_def = self.__find_definition_for_class("main")
-
-        # obj = class_def.instantiate_object()
-        # obj.run_method("main")
+        obj = class_def.instantiate_object()
+        obj.call_method("main", [])
+        # print(3)
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
