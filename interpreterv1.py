@@ -7,28 +7,43 @@ from pprint import pprint
 
 def get_sample_programs():
     return {
-        program: ['(class main',
-                  '(method hello_world (hi)',
-                  '(begin',
-                  '(print "Enter a number:")',
-                  ')',
-                  ')',
-                  ')'],
-        'program2': ['(class main',
-                     '(field foo_123 10)',
-                     '(field name "unknown")',
-                     '(field _awesome true)',
-                     '(field obj_ref_field_puppy null)'
-                     '(field other null)',
-                     '(method hello_world () (print “hello world!”))',
-                     ')',
-                     '(class test',
-                     '(method hi () (print “hello world!”))',
-                     ')']
+        'simple': ['(class main',
+                   '(method hello_world (hi)',
+                   '(begin',
+                   '(print "Enter a number:")',
+                   ')',
+                   ')',
+                   ')'],
+        'single_class_multi_method': ['(class main',
+                                      '(method main () (print "I am main!"))',
+                                      '(method add (a b) (+ a b))',
+                                      '(method sub (a b) (print "I am main!"))',
+                                      ')'],
+        'many_fields': ['(class main',
+                        '(field foo_123 10)',
+                        '(field name "unknown")',
+                        '(field _awesome true)',
+                        '(field obj_ref_field_puppy null)',
+                        '(method main () (print "I am main!"))',
+                        # '(method add (a b) (+ a b))',
+                        ')'],
+        # 'program2': ['(class main',
+        #              '(field foo_123 10)',
+        #              '(field name "unknown")',
+        #              '(field _awesome true)',
+        #              '(field obj_ref_field_puppy null)'
+        #              '(field other null)',
+        #              '(method hello_world () (print “hello world!”))',
+        #              ')',
+        #              '(class test',
+        #              '(method hi () (print “hello world!”))',
+        #              ')']
     }
 
 # Deliberately small and obscure name for each easy debugging
 # Will pritty print the array with the given indentation level
+
+
 def fn(items, level=-1):
     for item in items:
         if isinstance(item, list):
@@ -36,6 +51,28 @@ def fn(items, level=-1):
         else:
             indentation = '    ' * level
             print('%s%s' % (indentation, item))
+
+
+class MethodDefinition:
+    def __init__(self, method_name: str, top_level_statement: list, parameters: List[str]):
+        self.method_name = method_name
+        self.top_level_statement = top_level_statement
+        self.parameters = parameters
+        pass
+
+    # Returns the top-level statement list
+    # TO-DO: Add a documentation for what this looks like
+    def get_top_level_statement(self):
+        return self.top_level_statement
+
+    def get_num_parameters(self):
+        return len(self.parameters)
+
+    def get_parameter_names(self):
+        return self.parameters
+
+    def has_parameter(self, name: str) -> bool:
+        return name in self.parameters
 
 
 class ObjectDefinition:
@@ -120,8 +157,9 @@ class ObjectDefinition:
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, name):
+    def __init__(self, name, methods, fields):
         self.name = name
+        self.methods = methods
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
@@ -148,19 +186,39 @@ class Interpreter(InterpreterBase):
             print('Parsing failed. Please check the input file.')
             return
         else:
-            print(parsed_program)
+            # pprint(parsed_program)
+            fn(parsed_program)
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
         class_def = self.__find_definition_for_class("main")
+
         # obj = class_def.instantiate_object()
         # obj.run_method("main")
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
-        for class_data in parsed_program:
-            class_name = class_data[1]
-            self.class_definitions[class_name] = ClassDefinition(class_name)
+        for class_def in parsed_program:
+            # Get class name
+            class_name = class_def[1]
+
+            # Parse the methods and fields from the object
+            methods = self.__get_methods_for_class(class_def)
+    def __get_methods_for_class(self, class_def: list) -> list:
+        methods = {}
+        for statement in class_def[2:]:
+            if statement[0] == Interpreter.METHOD_DEF:
+                # Each method is in this format:
+                # ['method', <name>, [<parameters>], [<statements>]]
+                method_name: str = statement[1]
+                parameters_list: List[str] = statement[2]
+                top_level_statement = statement[3]
+
+                # Methods map stores <name:MethodDefinition> pairs
+                methods[method_name] = MethodDefinition(
+                    method_name, top_level_statement, parameters_list)
+        return methods
+
 
     def __find_definition_for_class(self, class_name: str):
         return self.class_definitions[class_name]
@@ -170,12 +228,8 @@ class Interpreter(InterpreterBase):
 if __name__ == "__main__":
     # file_name = './examples/example1.txt'
     # program = [line.strip() for line in open(file_name)]
-    program = ['(class main',
-               '(method hello_world () (print “hello world!”))',
-               ')',
-               '(class test',
-               '(method hi () (print “hello world!”))',
-               ')']
+    programs = get_sample_programs()
+    program = programs['many_fields']
 
     interpreter = Interpreter()
     interpreter.run(program)
