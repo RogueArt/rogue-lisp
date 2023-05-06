@@ -223,6 +223,18 @@ class Interpreter(InterpreterBase):
     def __find_definition_for_class(self, class_name: str):
         return self.class_definitions[class_name]
 
+    def __parse_str_into_python_value(self, value: str):
+        if value == InterpreterBase.TRUE_DEF:
+            return True
+        elif value == InterpreterBase.FALSE_DEF:
+            return False
+        elif value == InterpreterBase.NULL_DEF:
+            return None
+        elif value[0] == '"' and value[-1] == '"':
+            return value[1:-1]
+        else:
+            return int(value)
+
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
