@@ -1,0 +1,15 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: ['*']
+
+jobs:
+  run-command:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Python command
+        run: python tester.py
