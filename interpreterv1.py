@@ -85,14 +85,14 @@ class ObjectDefinition:
     def call_method(self, method_name, parameters):
         method = self.__find_method(method_name)
         statement = method.get_top_level_statement()
-        result = self.__run_statement(statement)
+        result = self.__run_statement(statement, parameters)
         return result
 
-    def __find_method(self, method_name):
-        pass
+    def __find_method(self, method_name: str) -> MethodDefinition:
+        return self.methods[method_name]
 
-    def __run_statement(self, statement):
-        pass
+    def __get_value_from_variable(self, variable_name: str) -> any:
+        return self.fields[variable_name]
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -115,7 +115,8 @@ class ObjectDefinition:
         return result
 
     def is_a_print_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.PRINT_DEF
+
 
     def is_an_input_statement(self, statement):
         return False
@@ -170,7 +171,27 @@ class ObjectDefinition:
         return int(operand)
 
     def __execute_print_statement(self, statement):
-        pass
+        # Three cases to handle:
+        # 1. Value - we can format and print this directly
+        # 2. Variable - we must do a lookup for the variable name
+        # 3. Expression - we must do a calculation for this value
+
+        # TO-DO: Refactor
+        # TO-DO: Handle function calls
+        formatted_arguments = []
+        for arg in statement[1:]:
+            if isinstance(arg, list):
+                formatted_arguments.append(str(self.evaluate_expression(arg)))
+            elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
+                formatted_arguments.append(arg[1:-1])
+            elif isinstance(arg, str) and arg.lower() in ['true', 'false', 'null'] or arg.isnumeric():
+                formatted_arguments.append(str(arg))
+            else:
+                formatted_arguments.append(
+                    str(self.__get_value_from_variable(arg)))
+
+        self.interpreter.output(' '.join(formatted_arguments))
+        return
 
     def __execute_input_statement(self, statement):
         pass
