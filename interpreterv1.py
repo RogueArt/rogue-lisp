@@ -78,11 +78,13 @@ class MethodDefinition:
 
 
 class ObjectDefinition:
-    def __init__(self, _):
-        pass
+    def __init__(self, interpreter, methods: Dict[str, MethodDefinition], fields: Dict[str, any]):
+        self.interpreter = interpreter
+        self.methods = methods
+        self.fields = fields
 
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name, parameters):
+    def call_method(self, method_name: str, parameters: List[str]):
         method = self.__find_method(method_name)
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement, parameters)
@@ -214,18 +216,22 @@ class ObjectDefinition:
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, name, methods, fields):
+    def __init__(self, interpreter, name, methods, fields):
+        self.interpreter = interpreter
         self.name = name
         self.methods = methods
         self.fields = fields
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition()
-        for method in self.methods:
-            obj.add_method(method)
-        for field in self.fields:
-            obj.add_field(field.name(), field.initial_value())
+        obj = ObjectDefinition(self.interpreter, copy.deepcopy(
+            self.methods), copy.deepcopy(self.fields))
+        
+        # To-DO: Evaluate if this is a better approach below
+        # for method_name, method_def in self.methods.items():
+        #     obj.add_method(method_name, method_def)
+        # for field_name, field_value in self.fields.items():
+        #     obj.add_field(field_name, field_value)
         return obj
 
 
@@ -244,15 +250,14 @@ class Interpreter(InterpreterBase):
             print('Parsing failed. Please check the input file.')
             return
         else:
-            # pprint(parsed_program)
             fn(parsed_program)
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
         class_def = self.__find_definition_for_class("main")
-
-        # obj = class_def.instantiate_object()
-        # obj.run_method("main")
+        obj = class_def.instantiate_object()
+        obj.call_method("main", [])
+        # print(3)
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
