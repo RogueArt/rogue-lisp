@@ -85,8 +85,8 @@ class ObjectDefinition:
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, _):
-        pass
+    def __init__(self, name):
+        self.name = name
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
@@ -103,15 +103,32 @@ class Interpreter(InterpreterBase):
         # call InterpreterBase's constructor
         super().__init__(console_ouptput, trace_output)
 
+        self.class_definitions = dict()
+        self.objects = dict()
+
     def run(self, program):
         # Parse the program into a more easily processed form
         result, parsed_program = BParser.parse(program)
         if result == False:
-            return  # error
+            print('Parsing failed. Please check the input file.')
+            return
+        else:
+            print(parsed_program)
+
+        # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
         class_def = self.__find_definition_for_class("main")
-        obj = class_def.instantiate_object()
-        obj.run_method("main")
+        # obj = class_def.instantiate_object()
+        # obj.run_method("main")
+
+    def __discover_all_classes_and_track_them(self, parsed_program):
+        # Add classes to the list
+        for class_data in parsed_program:
+            class_name = class_data[1]
+            self.class_definitions[class_name] = ClassDefinition(class_name)
+
+    def __find_definition_for_class(self, class_name: str):
+        return self.class_definitions[class_name]
 
 
 # CODE FOR DEBUGGING PURPOSES ONLY
