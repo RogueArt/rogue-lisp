@@ -1,0 +1,4 @@
+(class main
+  (field num 0)
+  (field result 1)
+)
