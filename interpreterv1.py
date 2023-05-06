@@ -114,9 +114,16 @@ class Interpreter(InterpreterBase):
         obj.run_method("main")
 
 
-program = ['(class main',
-           '(method hello_world () (print “hello world!”))',
-           ')']
+# CODE FOR DEBUGGING PURPOSES ONLY
+if __name__ == "__main__":
+    # file_name = './examples/example1.txt'
+    # program = [line.strip() for line in open(file_name)]
+    program = ['(class main',
+               '(method hello_world () (print “hello world!”))',
+               ')',
+               '(class test',
+               '(method hi () (print “hello world!”))',
+               ')']
 
-interpreter = Interpreter()
-interpreter.run(program)
+    interpreter = Interpreter()
+    interpreter.run(program)
