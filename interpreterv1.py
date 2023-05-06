@@ -2,6 +2,41 @@ from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from pprint import pprint
 
+# DEBUGGING ONLY - PLEASE DO NOT PUSH:
+
+
+def get_sample_programs():
+    return {
+        program: ['(class main',
+                  '(method hello_world (hi)',
+                  '(begin',
+                  '(print "Enter a number:")',
+                  ')',
+                  ')',
+                  ')'],
+        'program2': ['(class main',
+                     '(field foo_123 10)',
+                     '(field name "unknown")',
+                     '(field _awesome true)',
+                     '(field obj_ref_field_puppy null)'
+                     '(field other null)',
+                     '(method hello_world () (print “hello world!”))',
+                     ')',
+                     '(class test',
+                     '(method hi () (print “hello world!”))',
+                     ')']
+    }
+
+# Deliberately small and obscure name for each easy debugging
+# Will pritty print the array with the given indentation level
+def fn(items, level=-1):
+    for item in items:
+        if isinstance(item, list):
+            fn(item, level + 1)
+        else:
+            indentation = '    ' * level
+            print('%s%s' % (indentation, item))
+
 
 class ObjectDefinition:
     def __init__(self, _):
