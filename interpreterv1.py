@@ -1,3 +1,4 @@
+from typing import List
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from pprint import pprint
@@ -160,13 +161,14 @@ class ClassDefinition:
     def __init__(self, name, methods, fields):
         self.name = name
         self.methods = methods
+        self.fields = fields
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
         obj = ObjectDefinition()
-        for method in self.my_methods:
+        for method in self.methods:
             obj.add_method(method)
-        for field in self.my_fields:
+        for field in self.fields:
             obj.add_field(field.name(), field.initial_value())
         return obj
 
@@ -204,6 +206,12 @@ class Interpreter(InterpreterBase):
 
             # Parse the methods and fields from the object
             methods = self.__get_methods_for_class(class_def)
+            fields = self.__get_fields_for_class(class_def)
+
+            # Create a new class with given methods and fields
+            self.class_definitions[class_name] = ClassDefinition(
+                class_name, methods, fields)
+
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
         for statement in class_def[2:]:
@@ -219,6 +227,18 @@ class Interpreter(InterpreterBase):
                     method_name, top_level_statement, parameters_list)
         return methods
 
+    def __get_fields_for_class(self, class_def: list) -> list:
+        fields = {}
+        for statement in class_def[2:]:
+            if statement[0] == Interpreter.FIELD_DEF:
+                field_name: str = statement[1]
+                value: List[str] = self.__parse_str_into_python_value(
+                    statement[2])
+
+                # Fields map stores <name:value> pairs
+                fields[field_name] = value
+
+        return fields
 
     def __find_definition_for_class(self, class_name: str):
         return self.class_definitions[class_name]
