@@ -228,7 +228,7 @@ class ObjectDefinition:
 
             operand = self.__parse_str_into_python_value(operand)
             if operator == '!':
-                return not self.evaluate_expression(operand)
+                return not operand
 
         # Case 5: Error - invalid expression format
         raise Exception("Invalid expression format")
@@ -245,7 +245,9 @@ class ObjectDefinition:
         formatted_arguments = []
         for arg in statement[1:]:
             if isinstance(arg, list):
-                formatted_arguments.append(str(self.evaluate_expression(arg)))
+                val = self.evaluate_expression(arg)
+                formatted_val = self.__convert_python_value_to_str(val)
+                formatted_arguments.append(formatted_val)
             elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
                 formatted_arguments.append(arg[1:-1])
             elif isinstance(arg, str) and arg.lower() in [InterpreterBase.TRUE_DEF, InterpreterBase.FALSE_DEF, InterpreterBase.NULL_DEF] or arg.isnumeric():
@@ -256,6 +258,7 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
+        # print(formatted_arguments)
         self.interpreter_base.output(''.join(formatted_arguments))
         return
 
