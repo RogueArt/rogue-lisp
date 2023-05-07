@@ -199,11 +199,12 @@ class ObjectDefinition:
             operand2 = self.evaluate_expression(operand2)
 
             # Case 1: Operands must be of the same type
-            if type(operand1) != type(operand2):
+            # Except in the case of a None and Object comparison
+            if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
             
             # Case 2: Operands must be compatible with operator
-            if not self.is_operand_compatible_with_operator(operator, operand1) and not self.is_operand_compatible_with_operator(operator, operand2):
+            if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             match operator:
