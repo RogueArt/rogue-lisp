@@ -172,13 +172,59 @@ class ObjectDefinition:
     def is_a_begin_statement(self, statement):
         return statement[0] == InterpreterBase.BEGIN_DEF
 
+    # <==== EVALUATION & VALUE HANDLER =========>
+    # TO-DO: Have ObjectDefinition inherit this
+    def __parse_str_into_python_value(self, value: str) -> None | int | bool | str:
+        if value == InterpreterBase.TRUE_DEF:
+            return True
+        elif value == InterpreterBase.FALSE_DEF:
+            return False
+        elif value == InterpreterBase.NULL_DEF:
+            return None
+        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
+            return value[1:-1]
+        elif self.__is_integer_in_string_form(value):
+            return int(value)
+        elif self.is_variable_name():
+            return self.get_variable_with_name(value)
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+
+    # For display formatting - convert python value to string
+    def __convert_python_value_to_str(self, value) -> str:
+        if value is True:
+            return InterpreterBase.TRUE_DEF
+        elif value is False:
+            return InterpreterBase.FALSE_DEF
+        elif value is None:
+            return InterpreterBase.NULL_DEF
+        elif isinstance(value, str):
+            return '"' + value + '"'
+        elif isinstance(value, int):
+            return str(value)
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+
+    def __is_integer_in_string_form(self, s):
+        if s[0] in ('-', '+'):
+            return s[1:].isdigit()
+        return s.isdigit()
+
     def evaluate_expression(self, expression):
-        if not isinstance(expression, int) and len(expression) == 3:
+        # Arrived a singular value, not a list
+        # Case 1: Reached a const value
+        # Case 2: Reached a variable
+        if not isinstance(list):
+            return self.__parse_str_into_python_value(expression[0])
+
+        # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
+        if isinstance(list) and len(expression) == 3:
             operator, operand1, operand2 = expression
             operand1 = self.__parse_str_into_python_value(operand1)
             operand2 = self.__parse_str_into_python_value(operand2)
             # TO-DO: Handle variable names for operands
 
+            # TO-DO: Store the evaluate express code here to improve code reuse
             match operator:
                 case '+':
                     return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
@@ -202,11 +248,21 @@ class ObjectDefinition:
                     return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
                 case '<=':
                     return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
-            # print('Expression:', expression)
+                case '&':
+                    return self.evaluate_expression(operand1) and self.evaluate_expression(operand2)
+                case '|':
+                    return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
 
-        elif isinstance(expression, int):
-            operand = expression
-            return int(operand)
+        # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
+        if isinstance(list) and len(expression) == 2:
+            operator, operand = expression
+
+            operand = self.__parse_str_into_python_value(operand)
+            if operator == '!':
+                return not self.evaluate_expression(operand)
+
+        # Case 5: Error - invalid expression format
+        raise Exception("Invalid expression format")
 
     def __execute_print_statement(self, statement):
         # Three cases to handle:
@@ -229,6 +285,14 @@ class ObjectDefinition:
                     str(self.__get_value_from_variable(arg)))
 
         self.interpreter.output(' '.join(formatted_arguments))
+        return
+
+    def __execute_set_statement(self, statement):
+        field_name, val = statement[1], statement[2]
+        if isinstance(val, list):
+            val = self.evaluate_expression(val)
+        val = self.__parse_str_into_python_value(val)
+        self.set_field_value(field_name, val)
         return
 
     def __execute_input_statement(self, statement):
