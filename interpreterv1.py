@@ -382,9 +382,9 @@ class ObjectDefinition:
         result = None
 
         should_execute = self.evaluate_expression(statement[1])
-        while should_execute:
-            result = self.__run_statement(statement[2])
-            should_execute = self.evaluate_expression(statement[1])
+        if should_execute and not self.terminated:
+            self.__run_statement(statement[2])
+            self.__execute_while_statement(statement)
         
         return result
 
