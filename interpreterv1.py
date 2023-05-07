@@ -100,8 +100,11 @@ class ObjectDefinition:
         return self.methods[method_name]
 
     # Account for scoping
+    # Note: we have to explicitly check for this as Python only has "None", not "undefined"
     def has_variable_with_name(self, name: str) -> bool:
         # 1. Check parameter level scope for method
+        if name in self.parameters:
+            return True
 
         # 2. Check field level scope for object
         return name in self.fields
@@ -110,10 +113,10 @@ class ObjectDefinition:
         # TO-DO: Fix this for method definition
         # 1. Check parameter level scope for method
         if name in self.parameters:
-            return True
+            return self.parameters[name]
 
         # 2. Check field level scope for object
-        return name in self.fields
+        return self.fields[name] if name in self.fields else None
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
@@ -155,7 +158,8 @@ class ObjectDefinition:
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
 
-    def __is_integer_in_string_form(self, s):
+    # TO-DO: Figure out why this is getting an int
+    def __is_integer_in_string_form(self, s: str | int):
         if s[0] in ('-', '+'):
             return s[1:].isdigit()
         return s.isdigit()
@@ -164,11 +168,17 @@ class ObjectDefinition:
         # Arrived a singular value, not a list
         # Case 1: Reached a const value
         # Case 2: Reached a variable
-        if not isinstance(list):
-            return self.__parse_str_into_python_value(expression[0])
+        if not isinstance(expression, list):
+            # TO-DO: Figure out why this is getting a listw
+            # Received an integer value
+            if isinstance(expression, int):
+                return expression
+            # Received a string value
+            else:
+                return self.__parse_str_into_python_value(expression)
 
         # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
-        if isinstance(list) and len(expression) == 3:
+        if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
             operand1 = self.__parse_str_into_python_value(operand1)
             operand2 = self.__parse_str_into_python_value(operand2)
@@ -204,7 +214,7 @@ class ObjectDefinition:
                     return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
 
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
-        if isinstance(list) and len(expression) == 2:
+        if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
 
             operand = self.__parse_str_into_python_value(operand)
@@ -214,6 +224,7 @@ class ObjectDefinition:
         # Case 5: Error - invalid expression format
         raise Exception("Invalid expression format")
 
+    # <========= END EXPRESSION HANDLER ============>
     def __execute_print_statement(self, statement):
         # Three cases to handle:
         # 1. Value - we can format and print this directly
@@ -233,8 +244,8 @@ class ObjectDefinition:
             else:
                 variable_name = arg
                 value = self.get_variable_with_name(variable_name)
-                self.__convert_python_value_to_str(value)
-                formatted_arguments.append(value)
+                formatted_value = self.__convert_python_value_to_str(value)
+                formatted_arguments.append(formatted_value)
 
         self.interpreter.output(' '.join(formatted_arguments))
         return
