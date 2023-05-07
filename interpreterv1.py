@@ -14,7 +14,7 @@ class MethodDefinition:
         self.method_name = method_name
         self.top_level_statement = top_level_statement
         self.parameter_names = parameter_names
-        self.parameter_values = []
+        self.parameter_dict_stack = []
         pass
 
     # Returns the top-level statement list
@@ -33,22 +33,31 @@ class MethodDefinition:
 
 
 class ObjectDefinition:
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, any]):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
         self.interpreter = interpreter
         self.interpreter_base = interpreter_base
         self.methods = methods
         self.fields = fields
         self.result = None
 
-        # TO-DO: Implement this for scoping
-        self.parameters = []
+        self.parameter_stack: List[Dict[str, None|int|bool|str]] = []
+        self.parameters: Dict[str, None|int|bool|str] = {}
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name: str, parameters: List[str]):
+    def call_method(self, method_name: str, parameters_map: Dict[str, None|int|bool|str]):
+        # Add the parameter list to the call stack
+        self.parameter_stack.append(parameters_map)
+        self.parameters = self.parameter_stack[-1]
+
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement)
+
+        # Pop the parameter list from the call stack
+        self.parameter_stack.pop()
+        # self.parameters = self.parameter_stack[-1]
+        
         return result
 
     # runs/interprets the passed-in statement until completion and
@@ -158,7 +167,7 @@ class ObjectDefinition:
         elif value is None:
             return InterpreterBase.NULL_DEF
         elif isinstance(value, str):
-            return '"' + value + '"'
+            return value # '"' + value + '"'
         elif isinstance(value, int):
             return str(value)
         else:
@@ -170,7 +179,7 @@ class ObjectDefinition:
             return s[1:].isdigit()
         return s.isdigit()
 
-    def evaluate_expression(self, expression):
+    def evaluate_expression(self, expression) -> None|int|bool|str:
         # Arrived a singular value, not a list
         # Case 1: Reached a const value
         # Case 2: Reached a variable
@@ -276,19 +285,29 @@ class ObjectDefinition:
         pass
 
     def __execute_call_statement(self, statement):
-        obj_name, method_name, param_values = statement[1], statement[2], statement[3:]
-
-        # For each argument, do a recursive variable lookup
+        obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
-        obj = self if obj_name == 'me' else self.get_variable_with_name(
+        obj = self if obj_name == InterpreterBase.ME_DEF else self.get_variable_with_name(
             obj_name)
         if obj is None:
             raise ErrorType('Could not find object')
 
+        # Parameters to the method are any variable, constant, or expression
+        # We evaluate each expression and create a map of parameter names to values
+        parameter_map = {}
+        method = obj.get_method_with_name(method_name)
+        for index, expression in enumerate(param_expressions):
+            # Get the value for each variable name
+            value = obj.evaluate_expression(expression)
+
+            # Update map with the appropriate parameter names
+            parameter_name = method.parameter_names[index]
+            parameter_map[parameter_name] = value
+
         # TO-DO: Add setting parameter values
         # Run the method on the object
-        obj.call_method(method_name, param_values)
+        obj.call_method(method_name, parameter_map)
         return
 
     def __execute_while_statement(self, statement):
@@ -352,7 +371,7 @@ class Interpreter(InterpreterBase):
         self.__discover_all_classes_and_track_them(parsed_program)
         class_def = self.find_definition_for_class("main")
         obj = class_def.instantiate_object()
-        obj.call_method("main", [])
+        obj.call_method("main", {})
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
@@ -425,7 +444,7 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['object_instantiation']
+    # run_tests = ['parameter_scoping_test']
     run_tests = []
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
