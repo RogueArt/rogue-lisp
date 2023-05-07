@@ -151,6 +151,8 @@ class ObjectDefinition:
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
         # 1. Check the parameter stack
+        if name in self.parameters:
+            self.parameters[name] = new_val
 
         # 2. Check the fields of the object
         self.fields[name] = new_val
@@ -258,8 +260,11 @@ class ObjectDefinition:
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
+            operand = self.evaluate_expression(operand)
 
-            operand = self.__parse_str_into_python_value(operand)
+            if not isinstance(operand, bool):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
             if operator == '!':
                 return not operand
 
