@@ -86,18 +86,13 @@ class ObjectDefinition:
         self.fields = fields
         self.result = None
 
+    # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
     def call_method(self, method_name: str, parameters: List[str]):
-        method = self.__find_method(method_name)
+        method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement, parameters)
         return result
-
-    def __find_method(self, method_name: str) -> MethodDefinition:
-        return self.methods[method_name]
-
-    def __get_value_from_variable(self, variable_name: str) -> any:
-        return self.fields[variable_name]
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -131,31 +126,6 @@ class ObjectDefinition:
     def is_a_set_statement(self, statement):
         return statement[0] == InterpreterBase.SET_DEF
 
-    # TO-DO: Implement scope look up
-    def set_field_value(self, field_name, val):
-        self.fields[field_name] = val
-
-    # TO-DO: Have ObjectDefinition inherit this
-    def __parse_str_into_python_value(self, value: str):
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        else:
-            return int(value)
-
-    def __execute_set_statement(self, statement):
-        field_name, val = statement[1], statement[2]
-        if isinstance(val, list):
-            val = self.evaluate_expression(val)
-        val = self.__parse_str_into_python_value(val)
-        self.set_field_value(field_name, val)
-        return
-
     def is_an_input_statement(self, statement):
         return False
 
@@ -173,6 +143,33 @@ class ObjectDefinition:
 
     def is_a_begin_statement(self, statement):
         return statement[0] == InterpreterBase.BEGIN_DEF
+
+    #  <========== GETTERS AND SETTERS ===========>
+    def get_method_with_name(self, method_name: str) -> MethodDefinition:
+        return self.methods[method_name]
+
+    # Account for scoping
+    def has_variable_with_name(self, name: str) -> bool:
+        # 1. Check parameter level scope for method
+
+        # 2. Check field level scope for object
+        return name in self.fields
+
+    def get_variable_with_name(self, name: str) -> None | int | str | bool:
+        # TO-DO: Fix this for method definition
+        # 1. Check parameter level scope for method
+        if name in self.parameters:
+            return True
+
+        # 2. Check field level scope for object
+        return name in self.fields
+
+    def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
+        # Check in order of increasing scope
+        # 1. Check the parameter stack
+
+        # 2. Check the fields of the object
+        self.fields[name] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
     # TO-DO: Have ObjectDefinition inherit this
@@ -283,8 +280,10 @@ class ObjectDefinition:
             elif isinstance(arg, str) and arg.lower() in ['true', 'false', 'null'] or arg.isnumeric():
                 formatted_arguments.append(str(arg))
             else:
-                formatted_arguments.append(
-                    str(self.__get_value_from_variable(arg)))
+                variable_name = arg
+                value = self.get_variable_with_name(variable_name)
+                self.__convert_python_value_to_str(value)
+                formatted_arguments.append(value)
 
         self.interpreter.output(' '.join(formatted_arguments))
         return
@@ -294,7 +293,7 @@ class ObjectDefinition:
         if isinstance(val, list):
             val = self.evaluate_expression(val)
         val = self.__parse_str_into_python_value(val)
-        self.set_field_value(field_name, val)
+        self.update_variable_with_name(field_name, val)
         return
 
     def __execute_input_statement(self, statement):
