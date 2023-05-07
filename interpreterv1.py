@@ -173,12 +173,20 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.BEGIN_DEF
 
     def evaluate_expression(self, expression):
-        if not isinstance(expression, int) and len(expression) == 3:
+        # Arrived a singular value, not a list
+        # Case 1: Reached a const value
+        # Case 2: Reached a variable
+        if not isinstance(list):
+            return self.__parse_str_into_python_value(expression[0])
+
+        # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
+        if isinstance(list) and len(expression) == 3:
             operator, operand1, operand2 = expression
             operand1 = self.__parse_str_into_python_value(operand1)
             operand2 = self.__parse_str_into_python_value(operand2)
             # TO-DO: Handle variable names for operands
 
+            # TO-DO: Store the evaluate express code here to improve code reuse
             match operator:
                 case '+':
                     return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
@@ -202,11 +210,21 @@ class ObjectDefinition:
                     return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
                 case '<=':
                     return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
-            # print('Expression:', expression)
+                case '&':
+                    return self.evaluate_expression(operand1) and self.evaluate_expression(operand2)
+                case '|':
+                    return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
 
-        elif isinstance(expression, int):
-            operand = expression
-            return int(operand)
+        # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
+        if isinstance(list) and len(expression) == 2:
+            operator, operand = expression
+
+            operand = self.__parse_str_into_python_value(operand)
+            if operator == '!':
+                return not self.evaluate_expression(operand)
+
+        # Case 5: Error - invalid expression format
+        raise Exception("Invalid expression format")
 
     def __execute_print_statement(self, statement):
         # Three cases to handle:
@@ -229,6 +247,14 @@ class ObjectDefinition:
                     str(self.__get_value_from_variable(arg)))
 
         self.interpreter.output(' '.join(formatted_arguments))
+        return
+
+    def __execute_set_statement(self, statement):
+        field_name, val = statement[1], statement[2]
+        if isinstance(val, list):
+            val = self.evaluate_expression(val)
+        val = self.__parse_str_into_python_value(val)
+        self.set_field_value(field_name, val)
         return
 
     def __execute_input_statement(self, statement):
