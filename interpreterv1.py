@@ -156,7 +156,7 @@ class ObjectDefinition:
         elif self.has_variable_with_name(value):
             return self.get_variable_with_name(value)
         else:
-            raise ValueError('Unsupported value type: {}'.format(type(value)))
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def __convert_python_value_to_str(self, value) -> str:
@@ -194,6 +194,18 @@ class ObjectDefinition:
         # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
+
+            operand1 = self.evaluate_expression(operand1)
+            operand2 = self.evaluate_expression(operand2)
+
+            # Case 1: Operands must be of the same type
+            if type(operand1) != type(operand2):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+            
+            # Case 2: Operands must be compatible with operator
+            if not self.is_operand_compatible_with_operator(operator, operand1) and not self.is_operand_compatible_with_operator(operator, operand2):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
             match operator:
                 case '+':
                     return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
