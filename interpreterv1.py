@@ -4,57 +4,8 @@ from bparser import BParser
 from pprint import pprint
 import copy
 
-# DEBUGGING ONLY - PLEASE DO NOT PUSH:
-
-
-def get_sample_programs():
-    return {
-        'simple': ['(class main',
-                   '(method hello_world (hi)',
-                   '(begin',
-                   '(print "Enter a number:")',
-                   ')',
-                   ')',
-                   ')'],
-        'single_class_multi_method': ['(class main',
-                                      '(method main () (print "I am main!"))',
-                                      '(method add (a b) (+ a b))',
-                                      '(method sub (a b) (print "I am main!"))',
-                                      ')'],
-        'many_fields': ['(class main',
-                        '(field foo_123 10)',
-                        '(field name "unknown")',
-                        '(field _awesome true)',
-                        '(field obj_ref_field_puppy null)',
-                        # '(method main () (set foo_123 20))',
-                        '(method main () (set foo_123 (+ 20 50)))',
-                        # '(method main () (print "The value is" foo_123 "and" name "and" _awesome "and" obj_ref_field_puppy (% 3 2)))',
-                        # '(method add (a b) (+ a b))',
-                        ')'],
-        # 'program2': ['(class main',
-        #              '(field foo_123 10)',
-        #              '(field name "unknown")',
-        #              '(field _awesome true)',
-        #              '(field obj_ref_field_puppy null)'
-        #              '(field other null)',
-        #              '(method hello_world () (print “hello world!”))',
-        #              ')',
-        #              '(class test',
-        #              '(method hi () (print “hello world!”))',
-        #              ')']
-    }
-
-# Deliberately small and obscure name for each easy debugging
-# Will pritty print the array with the given indentation level
-
-
-def fn(items, level=-1):
-    for item in items:
-        if isinstance(item, list):
-            fn(item, level + 1)
-        else:
-            indentation = '    ' * level
-            print('%s%s' % (indentation, item))
+# Testing only
+from testing import get_test_programs, fn
 
 
 class MethodDefinition:
@@ -149,8 +100,11 @@ class ObjectDefinition:
         return self.methods[method_name]
 
     # Account for scoping
+    # Note: we have to explicitly check for this as Python only has "None", not "undefined"
     def has_variable_with_name(self, name: str) -> bool:
         # 1. Check parameter level scope for method
+        if name in self.parameters:
+            return True
 
         # 2. Check field level scope for object
         return name in self.fields
@@ -159,10 +113,10 @@ class ObjectDefinition:
         # TO-DO: Fix this for method definition
         # 1. Check parameter level scope for method
         if name in self.parameters:
-            return True
+            return self.parameters[name]
 
         # 2. Check field level scope for object
-        return name in self.fields
+        return self.fields[name] if name in self.fields else None
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
@@ -204,7 +158,8 @@ class ObjectDefinition:
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
 
-    def __is_integer_in_string_form(self, s):
+    # TO-DO: Figure out why this is getting an int
+    def __is_integer_in_string_form(self, s: str | int):
         if s[0] in ('-', '+'):
             return s[1:].isdigit()
         return s.isdigit()
@@ -213,11 +168,17 @@ class ObjectDefinition:
         # Arrived a singular value, not a list
         # Case 1: Reached a const value
         # Case 2: Reached a variable
-        if not isinstance(list):
-            return self.__parse_str_into_python_value(expression[0])
+        if not isinstance(expression, list):
+            # TO-DO: Figure out why this is getting a listw
+            # Received an integer value
+            if isinstance(expression, int):
+                return expression
+            # Received a string value
+            else:
+                return self.__parse_str_into_python_value(expression)
 
         # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
-        if isinstance(list) and len(expression) == 3:
+        if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
             operand1 = self.__parse_str_into_python_value(operand1)
             operand2 = self.__parse_str_into_python_value(operand2)
@@ -253,7 +214,7 @@ class ObjectDefinition:
                     return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
 
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
-        if isinstance(list) and len(expression) == 2:
+        if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
 
             operand = self.__parse_str_into_python_value(operand)
@@ -263,6 +224,7 @@ class ObjectDefinition:
         # Case 5: Error - invalid expression format
         raise Exception("Invalid expression format")
 
+    # <========= END EXPRESSION HANDLER ============>
     def __execute_print_statement(self, statement):
         # Three cases to handle:
         # 1. Value - we can format and print this directly
@@ -282,8 +244,8 @@ class ObjectDefinition:
             else:
                 variable_name = arg
                 value = self.get_variable_with_name(variable_name)
-                self.__convert_python_value_to_str(value)
-                formatted_arguments.append(value)
+                formatted_value = self.__convert_python_value_to_str(value)
+                formatted_arguments.append(formatted_value)
 
         self.interpreter.output(' '.join(formatted_arguments))
         return
@@ -422,8 +384,15 @@ class Interpreter(InterpreterBase):
 if __name__ == "__main__":
     # file_name = './examples/example1.txt'
     # program = [line.strip() for line in open(file_name)]
-    programs = get_sample_programs()
-    program = programs['many_fields']
 
-    interpreter = Interpreter()
-    interpreter.run(program)
+    test_programs = get_test_programs()
+    skip_tests = ['simple', 'many_fields']  # , 'set_fields'
+    for count, (program_name, program) in enumerate(test_programs.items()):
+        if program_name in skip_tests:
+            print(f"Skipping test #{count} {program_name}")
+            continue
+
+        print(f"Running test #{count} {program_name}:")
+        interpreter = Interpreter()
+        interpreter.run(program)
+        print(f"Finished testing {program_name}\n\n")
