@@ -63,15 +63,37 @@ def get_test_programs():
 
     # Basic call test - be able to instantiate object and call a method with no parameters on it
     basic_other_call_test = ['(class puppy', '(method bark ()', '(print "woof!")', ')', ')', '(class main', '(field puppy_ref null)',
-                       '(method main ()', '(begin', '(set puppy_ref (new puppy))', '(call puppy_ref bark)', ')', ')', ')']
+                             '(method main ()', '(begin', '(set puppy_ref (new puppy))', '(call puppy_ref bark)', ')', ')', ')']
 
     # Basic self call test - be able to call a method from own class
     basic_self_call_test = ['(class main', '(method bark () (print "its a me, mario!"))',
-                       '(field puppy_ref null)', '(method main ()', '(begin', '(call me bark)', ')', ')', ')']
-    
+                            '(field puppy_ref null)', '(method main ()', '(begin', '(call me bark)', ')', ')', ')']
+
     # Nested call test - be able to call a method from own class
 
-    return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'basic_other_call_test': basic_other_call_test, 'basic_self_call-test': basic_self_call_test, 'set_fields': set_fields}
+    # Parameter other call test - be able to call a method in another class with parameters on it
+    parameter_other_call_test = [
+        '(class animal',
+        '(method speak (type age sound)',
+        '(print "I am a " type " who is " age " year(s) old and goes " sound)',
+        ')',
+        ')',
+        '(class main',
+        '(field animal_ref null)',
+        '(method main ()',
+        '(begin',
+        '(set animal_ref (new animal))',
+        '(call animal_ref speak "dog" 20 "woof!")',
+        ')',
+        ')',
+        ')'
+    ]
+    # Parameter self call test - be able to call a method in own class with parameters on it
+    # parameter_other_call_test = ['class animal', '(method speak (type age sound)', '(print "I am a " type " who is " age " year(s) old and goes " sound)', ')', '(class main',
+    #                              '  (field animal_ref null)', '  (method main ()', '(begin', '  (set animal_ref (new animal))', '  (call animal_ref speak "dog" 20 "woof!")', ')', ')', ')']
+
+    return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
+            'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test}
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
