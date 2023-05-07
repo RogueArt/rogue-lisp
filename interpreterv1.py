@@ -295,7 +295,7 @@ class ObjectDefinition:
         self.interpreter_base.output(''.join(formatted_arguments))
         return
 
-    def __execute_set_statement(self, statement):
+    def __execute_set_statement(self, statement) -> None:
         # Get the simplified result of the expression:
         field_name, expression = statement[1], statement[2]
 
@@ -311,7 +311,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, val)
         return
 
-    def __execute_input_statement(self, statement):
+    def __execute_input_statement(self, statement) -> None:
         input_type, field_name = statement
 
         # Get and parse the user's input value
@@ -325,7 +325,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, value)
         return
 
-    def __execute_call_statement(self, statement):
+    def __execute_call_statement(self, statement) -> None|int|str|bool:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
@@ -348,19 +348,20 @@ class ObjectDefinition:
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
-        obj.call_method(method_name, parameter_map)
-        return
+        self.result = obj.call_method(method_name, parameter_map)
+        return self.result
 
-    def __execute_while_statement(self, statement):
+    def __execute_while_statement(self, statement) -> None|int|str|bool:
+        result = None
+
         should_execute = self.evaluate_expression(statement[1])
         while should_execute:
-            self.result = self.__run_statement(statement[2])
+            result = self.__run_statement(statement[2])
             should_execute = self.evaluate_expression(statement[1])
         
-        self.result = None
-        return
+        return result
 
-    def __execute_if_statement(self, statement):        
+    def __execute_if_statement(self, statement) -> None|int|str|bool:        
         should_execute = self.evaluate_expression(statement[1])
         # Handles variant of if (expr) (statemetnA)
         if should_execute:
