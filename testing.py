@@ -115,8 +115,81 @@ def get_test_programs():
 
     # Recursion test - be able to repeatedly call a method in a class until we hit a base case
 
+    # If statement - If (expr) (statement) variant
+    if_statement = [
+        '(class main',
+        '(method main ()',
+        '(begin',
+        '# Success case - print the value',
+        '(if (> (+ 3 2) 0)',
+        '(print "5 is greater than 0!")',
+        ')',
+        "# Failure case - don't print value",
+        '(if (>= -20 (/ 10 2))',
+        '(print "-20 is not greater than 5!")',
+        ')',
+        ')',
+        ')',
+        ')'
+    ]
+
+    # If else statement - If (expr) (statementA) (statementB)
+    if_else_statement = [
+        '(class main',
+        '(method main ()',
+        '(begin',
+        '# Success case - print the value',
+        '(if (> (+ 3 2) 0)',
+        '(print "5 is greater than 0!")',
+        '(print "5 is not greater than 0!")',
+        ')',
+        "# Failure case - don't print value",
+        '(if (>= -20 (/ 10 2))',
+        '(print "-20 is greater than or equal to 5!")',
+        '(print "-20 is not greater than or equal to 5!")',
+        ')',
+        ')',
+        ')',
+        ')'
+    ]
+
+    # Whlie statement - False case - should never execute
+    while_statement_false = [
+        '(class main',
+        '(method main ()',
+        '(begin',
+        '(while (< 1 0)',
+        '(begin',
+        '(print "x is " x)',
+        '(set x (- x 1))',
+        ')',
+        ')',
+        ')',
+        ')',
+        ')'
+    ]
+
+    # While statement - True case - looping count down
+    while_statement_counting_down = [
+        '(class main',
+        '(field x 5)',
+        '(method main ()',
+        '(begin',
+        '(while (> x 0)',
+        '(begin',
+        '(print "x is " x)',
+        '(set x (- x 1))',
+        ')',
+        ')',
+        ')',
+        ')',
+        ')'
+    ]
+
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
-            'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test, 'parameter_scoping_test': parameter_scoping_test}
+            'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test,
+             'parameter_scoping_test': parameter_scoping_test, 'if_statement': if_statement, 'if_else_statement': if_else_statement, 'while_statement_false': while_statement_false,
+             'while_statement_counting_down': while_statement_counting_down }
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
