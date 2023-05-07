@@ -4,57 +4,8 @@ from bparser import BParser
 from pprint import pprint
 import copy
 
-# DEBUGGING ONLY - PLEASE DO NOT PUSH:
-
-
-def get_sample_programs():
-    return {
-        'simple': ['(class main',
-                   '(method hello_world (hi)',
-                   '(begin',
-                   '(print "Enter a number:")',
-                   ')',
-                   ')',
-                   ')'],
-        'single_class_multi_method': ['(class main',
-                                      '(method main () (print "I am main!"))',
-                                      '(method add (a b) (+ a b))',
-                                      '(method sub (a b) (print "I am main!"))',
-                                      ')'],
-        'many_fields': ['(class main',
-                        '(field foo_123 10)',
-                        '(field name "unknown")',
-                        '(field _awesome true)',
-                        '(field obj_ref_field_puppy null)',
-                        # '(method main () (set foo_123 20))',
-                        '(method main () (set foo_123 (+ 20 50)))',
-                        # '(method main () (print "The value is" foo_123 "and" name "and" _awesome "and" obj_ref_field_puppy (% 3 2)))',
-                        # '(method add (a b) (+ a b))',
-                        ')'],
-        # 'program2': ['(class main',
-        #              '(field foo_123 10)',
-        #              '(field name "unknown")',
-        #              '(field _awesome true)',
-        #              '(field obj_ref_field_puppy null)'
-        #              '(field other null)',
-        #              '(method hello_world () (print “hello world!”))',
-        #              ')',
-        #              '(class test',
-        #              '(method hi () (print “hello world!”))',
-        #              ')']
-    }
-
-# Deliberately small and obscure name for each easy debugging
-# Will pritty print the array with the given indentation level
-
-
-def fn(items, level=-1):
-    for item in items:
-        if isinstance(item, list):
-            fn(item, level + 1)
-        else:
-            indentation = '    ' * level
-            print('%s%s' % (indentation, item))
+# Testing only
+from testing import get_test_programs, fn
 
 
 class MethodDefinition:
