@@ -191,7 +191,12 @@ class ObjectDefinition:
             # else:
             return self.__parse_str_into_python_value(expression)
 
-        # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
+        # Case 4: Reached a call statement
+        if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
+            val = self.__execute_call_statement(expression)
+            return val
+
+        # Case 4: Reached a triple -- we need to recurse and evaluaute this binary expression       
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
