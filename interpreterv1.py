@@ -333,14 +333,9 @@ class ObjectDefinition:
         field_name, expression = statement[1], statement[2]
 
         # Handle case in which we need to instantiate a new object
-        if isinstance(expression, list) and len(expression) == 2 and expression[0] == InterpreterBase.NEW_DEF:
-            # Get the class and instantiate a new object of this class
-            class_def = self.interpreter.find_definition_for_class(
-                expression[1])
-            val = class_def.instantiate_object()
         # Otherwise, treat everything as expressions
-        else:
-            val = self.evaluate_expression(expression)
+        # else:
+        val = self.evaluate_expression(expression)
         self.update_variable_with_name(field_name, val)
         return
 
@@ -362,8 +357,7 @@ class ObjectDefinition:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
-        obj = self if obj_name == InterpreterBase.ME_DEF else self.get_variable_with_name(
-            obj_name)
+        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name)
         if obj is None:
             raise ErrorType('Could not find object')
 
