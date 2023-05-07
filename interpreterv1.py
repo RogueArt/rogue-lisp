@@ -156,7 +156,7 @@ class ObjectDefinition:
         elif self.has_variable_with_name(value):
             return self.get_variable_with_name(value)
         else:
-            raise ValueError('Unsupported value type: {}'.format(type(value)))
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def __convert_python_value_to_str(self, value) -> str:
@@ -194,33 +194,46 @@ class ObjectDefinition:
         # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
+
+            operand1 = self.evaluate_expression(operand1)
+            operand2 = self.evaluate_expression(operand2)
+
+            # Case 1: Operands must be of the same type
+            # Except in the case of a None and Object comparison
+            if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+            
+            # Case 2: Operands must be compatible with operator
+            if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
             match operator:
                 case '+':
-                    return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
+                    return operand1 + operand2
                 case '-':
-                    return self.evaluate_expression(operand1) - self.evaluate_expression(operand2)
+                    return operand1 - operand2
                 case '*':
-                    return self.evaluate_expression(operand1) * self.evaluate_expression(operand2)
+                    return operand1 * operand2
                 case '/':
-                    return self.evaluate_expression(operand1) // self.evaluate_expression(operand2)
+                    return operand1 // operand2
                 case '%':
-                    return self.evaluate_expression(operand1) % self.evaluate_expression(operand2)
+                    return operand1 % operand2
                 case '==':
-                    return self.evaluate_expression(operand1) == self.evaluate_expression(operand2)
+                    return operand1 == operand2
                 case '!=':
-                    return self.evaluate_expression(operand1) != self.evaluate_expression(operand2)
+                    return operand1 != operand2
                 case '>':
-                    return self.evaluate_expression(operand1) > self.evaluate_expression(operand2)
+                    return operand1 > operand2
                 case '<':
-                    return self.evaluate_expression(operand1) < self.evaluate_expression(operand2)
+                    return operand1 < operand2
                 case '>=':
-                    return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
+                    return operand1 >= operand2
                 case '<=':
-                    return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
+                    return operand1 <= operand2
                 case '&':
-                    return self.evaluate_expression(operand1) and self.evaluate_expression(operand2)
+                    return operand1 and operand2
                 case '|':
-                    return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
+                    return operand1 or operand2
 
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
@@ -228,12 +241,32 @@ class ObjectDefinition:
 
             operand = self.__parse_str_into_python_value(operand)
             if operator == '!':
-                return not self.evaluate_expression(operand)
+                return not operand
 
         # Case 5: Error - invalid expression format
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
+    def is_operand_compatible_with_operator(self, operator: str, operand) -> bool:
+        if isinstance(operand, str) and operator == '+':
+            return True  # String concatenation is allowed with the + operator
+        elif isinstance(operand, int) and operator in ['+', '-', '*', '/', '%']:
+            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
+        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
+            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
+        elif operand is None and operator in ['==', '!=']:
+            return True  # Null comparison is allowed with the == and != operators
+        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
+            return True # Object comparison is allowed with the == and != operators 
+        elif operator == '!':
+            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
+        else:
+            return False  # Operand and operator are not compatible
+
     def __execute_print_statement(self, statement):
         # Two cases to handle:
         # 1. Value - we can format and print this directly
@@ -245,7 +278,9 @@ class ObjectDefinition:
         formatted_arguments = []
         for arg in statement[1:]:
             if isinstance(arg, list):
-                formatted_arguments.append(str(self.evaluate_expression(arg)))
+                val = self.evaluate_expression(arg)
+                formatted_val = self.__convert_python_value_to_str(val)
+                formatted_arguments.append(formatted_val)
             elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
                 formatted_arguments.append(arg[1:-1])
             elif isinstance(arg, str) and arg.lower() in [InterpreterBase.TRUE_DEF, InterpreterBase.FALSE_DEF, InterpreterBase.NULL_DEF] or arg.isnumeric():
@@ -256,6 +291,7 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
+        # print(formatted_arguments)
         self.interpreter_base.output(''.join(formatted_arguments))
         return
 
