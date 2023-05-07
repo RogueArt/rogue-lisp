@@ -56,7 +56,7 @@ class ObjectDefinition:
 
         # Pop the parameter list from the call stack
         self.parameter_stack.pop()
-        # self.parameters = self.parameter_stack[-1]
+        self.parameters = self.parameter_stack[-1] if len(self.parameter_stack) > 0 else {}
         
         return result
 
