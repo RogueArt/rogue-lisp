@@ -93,7 +93,7 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.SET_DEF
 
     def is_an_input_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.INPUT_INT_DEF or statement[0] == InterpreterBase.INPUT_STRING_DEF
 
     def is_a_call_statement(self, statement):
         return statement[0] == InterpreterBase.CALL_DEF
@@ -276,7 +276,18 @@ class ObjectDefinition:
         return
 
     def __execute_input_statement(self, statement):
-        pass
+        input_type, field_name = statement
+
+        # Get and parse the user's input value
+        input_val = self.interpreter_base.get_input()
+        if input_type == InterpreterBase.INPUT_INT_DEF:
+            value = self.__parse_str_into_python_value(input_val)
+        else:
+            value = input_val
+
+        # Update the variable with the new value
+        self.update_variable_with_name(field_name, value)
+        return
 
     def __execute_call_statement(self, statement):
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]

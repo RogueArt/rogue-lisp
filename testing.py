@@ -186,10 +186,38 @@ def get_test_programs():
         ')'
     ]
 
+    # Test that int and str can successfully receive inputs
+    input_int_test = [
+        '(class main',
+        '(field x 0)',
+        '(method main ()',
+        '(begin',
+        '(print "Please enter a number: ")'
+        '(inputi x) # input value from user, store in x variable',
+        '(print "3 more than what the user typed in is " (+ x 3))',
+        ')',
+        ')',
+        ')'
+    ]
+
+    input_str_test = [
+        '(class main',
+        '(field x "player unknowns battlegrounds")',
+        '(method main ()',
+        '(begin',
+        '(print "Please enter your favorite game: ")'
+        '(inputs x) # input value from user, store in x variable',
+        '(print (+ "The user\'s favorite game is: " x))',
+        ')',
+        ')',
+        ')'
+    ]
+
+
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
             'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test,
              'parameter_scoping_test': parameter_scoping_test, 'if_statement': if_statement, 'if_else_statement': if_else_statement, 'while_statement_false': while_statement_false,
-             'while_statement_counting_down': while_statement_counting_down }
+             'while_statement_counting_down': while_statement_counting_down, 'input_int_test': input_int_test, 'input_str_test': input_str_test}
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
