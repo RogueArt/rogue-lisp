@@ -200,20 +200,28 @@ class ObjectDefinition:
         # Case 1: Reached a const value
         # Case 2: Reached a variable
         if not isinstance(expression, list):
-            # TO-DO: Figure out why this is getting a listw
-            # Received an integer value
-            # if isinstance(expression, int):
-            #     return expression
-            # Received a string value
-            # else:
             return self.__parse_str_into_python_value(expression)
 
         # Case 4: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
             val = self.__execute_call_statement(expression)
             return val
+        
+        # Case 5: Reached a new statement
+        if isinstance(expression, list) and expression[0] == InterpreterBase.NEW_DEF:
+            # Get the name of the field
+            field_name = expression[1]
 
-        # Case 4: Reached a triple -- we need to recurse and evaluaute this binary expression       
+            # Get the class and instantiate a new object of this class
+            class_def = self.interpreter.find_definition_for_class(field_name)
+            val = class_def.instantiate_object()
+
+            # Add this to our fields / parameters
+            self.update_variable_with_name(field_name, val)
+            return val
+                
+
+        # Case 6: Reached a triple -- we need to recurse and evaluaute this binary expression       
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
