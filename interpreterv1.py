@@ -32,8 +32,9 @@ class MethodDefinition:
 
 
 class ObjectDefinition:
-    def __init__(self, interpreter, methods: Dict[str, MethodDefinition], fields: Dict[str, any]):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, any]):
         self.interpreter = interpreter
+        self.interpreter_base = interpreter_base
         self.methods = methods
         self.fields = fields
         self.result = None
@@ -43,7 +44,7 @@ class ObjectDefinition:
     def call_method(self, method_name: str, parameters: List[str]):
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
-        result = self.__run_statement(statement, parameters)
+        result = self.__run_statement(statement)
         return result
 
     # runs/interprets the passed-in statement until completion and
@@ -227,7 +228,7 @@ class ObjectDefinition:
 
     # <========= END EXPRESSION HANDLER ============>
     def __execute_print_statement(self, statement):
-        # Three cases to handle:
+        # Two cases to handle:
         # 1. Value - we can format and print this directly
         # 2. Variable - we must do a lookup for the variable name
         # 3. Expression - we must do a calculation for this value
@@ -248,14 +249,22 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
-        self.interpreter.output(' '.join(formatted_arguments))
+        self.interpreter_base.output(' '.join(formatted_arguments))
         return
 
     def __execute_set_statement(self, statement):
-        field_name, val = statement[1], statement[2]
-        if isinstance(val, list):
-            val = self.evaluate_expression(val)
-        val = self.__parse_str_into_python_value(val)
+        # Get the simplified result of the expression:
+        field_name, expression = statement[1], statement[2]
+
+        # Handle case in which we need to instantiate a new object
+        if isinstance(expression, list) and len(expression) == 2 and expression[0] == 'new':
+            # Get the class and instantiate a new object of this class
+            class_def = self.interpreter.find_definition_for_class(
+                expression[1])
+            val = class_def.instantiate_object()
+        # Otherwise, treat everything as expressions
+        else:
+            val = self.evaluate_expression(expression)
         self.update_variable_with_name(field_name, val)
         return
 
@@ -282,15 +291,16 @@ class ObjectDefinition:
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, interpreter, name, methods, fields):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, name, methods, fields):
         self.interpreter = interpreter
+        self.interpreter_base = interpreter_base
         self.name = name
         self.methods = methods
         self.fields = fields
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition(self.interpreter, copy.deepcopy(
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, copy.deepcopy(
             self.methods), copy.deepcopy(self.fields))
 
         # To-DO: Evaluate if this is a better approach below
@@ -306,6 +316,7 @@ class Interpreter(InterpreterBase):
         # call InterpreterBase's constructor
         super().__init__(console_ouptput, trace_output)
 
+        self.interpreter_base = super()
         self.class_definitions = dict()
         self.objects = dict()
 
@@ -322,7 +333,7 @@ class Interpreter(InterpreterBase):
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
-        class_def = self.__find_definition_for_class("main")
+        class_def = self.find_definition_for_class("main")
         obj = class_def.instantiate_object()
         obj.call_method("main", [])
         # print(3)
@@ -338,8 +349,8 @@ class Interpreter(InterpreterBase):
             fields = self.__get_fields_for_class(class_def)
 
             # Create a new class with given methods and fields
-            self.class_definitions[class_name] = ClassDefinition(super(),
-                                                                 class_name, methods, fields)
+            self.class_definitions[class_name] = ClassDefinition(
+                self, self.interpreter_base, class_name, methods, fields)
 
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
@@ -369,7 +380,7 @@ class Interpreter(InterpreterBase):
 
         return fields
 
-    def __find_definition_for_class(self, class_name: str):
+    def find_definition_for_class(self, class_name: str):
         return self.class_definitions[class_name]
 
     def __parse_str_into_python_value(self, value: str):
