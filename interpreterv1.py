@@ -172,6 +172,44 @@ class ObjectDefinition:
     def is_a_begin_statement(self, statement):
         return statement[0] == InterpreterBase.BEGIN_DEF
 
+    # <==== EVALUATION & VALUE HANDLER =========>
+    # TO-DO: Have ObjectDefinition inherit this
+    def __parse_str_into_python_value(self, value: str) -> None | int | bool | str:
+        if value == InterpreterBase.TRUE_DEF:
+            return True
+        elif value == InterpreterBase.FALSE_DEF:
+            return False
+        elif value == InterpreterBase.NULL_DEF:
+            return None
+        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
+            return value[1:-1]
+        elif self.__is_integer_in_string_form(value):
+            return int(value)
+        elif self.is_variable_name():
+            return self.get_variable_with_name(value)
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+
+    # For display formatting - convert python value to string
+    def __convert_python_value_to_str(self, value) -> str:
+        if value is True:
+            return InterpreterBase.TRUE_DEF
+        elif value is False:
+            return InterpreterBase.FALSE_DEF
+        elif value is None:
+            return InterpreterBase.NULL_DEF
+        elif isinstance(value, str):
+            return '"' + value + '"'
+        elif isinstance(value, int):
+            return str(value)
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+
+    def __is_integer_in_string_form(self, s):
+        if s[0] in ('-', '+'):
+            return s[1:].isdigit()
+        return s.isdigit()
+
     def evaluate_expression(self, expression):
         # Arrived a singular value, not a list
         # Case 1: Reached a const value
