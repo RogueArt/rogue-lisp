@@ -151,7 +151,7 @@ class ObjectDefinition:
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
         # 1. Check the parameter stack
-        if name in self.call_method:
+        if name in self.parameters:
             self.parameters[name] = new_val
 
         # 2. Check the fields of the object
