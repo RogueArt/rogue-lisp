@@ -272,7 +272,20 @@ class ObjectDefinition:
         pass
 
     def __execute_call_statement(self, statement):
-        pass
+        obj_name, method_name, param_values = statement[1], statement[2], statement[3:]
+
+        # For each argument, do a recursive variable lookup
+
+        # Get object based on if it's the current or some other object
+        obj = self if obj_name == 'me' else self.get_variable_with_name(
+            obj_name)
+        if obj is None:
+            raise ErrorType('Could not find object')
+
+        # TO-DO: Add setting parameter values
+        # Run the method on the object
+        obj.call_method(method_name, param_values)
+        return
 
     def __execute_while_statement(self, statement):
         pass
