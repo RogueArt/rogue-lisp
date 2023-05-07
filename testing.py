@@ -71,6 +71,115 @@ def get_test_programs():
 
     # Nested call test - be able to call a method from own class
 
+    # Integer comparison
+    integer_comparison = [
+    '(class main',
+    '(field some_object null)',
+    '(method main ()',
+    '(begin',
+        '(print "(+ 5 10) " (+ 5 10))           # 15',
+        '(print "(+ -5 10) " (+ -5 10))         # 5',
+        '(print "(+ 5 0) " (+ 5 0))             # 5',
+        '(print "(+ -5 -10) " (+ -5 -10))       # -15',
+        '(print "(- 5 10) " (- 5 10))           # -5',
+        '(print "(- -5 10) " (- -5 10))         # -15',
+        '(print "(- 5 0) " (- 5 0))             # 5',
+        '(print "(- -5 -10) " (- -5 -10))       # 5',
+        '(print "(* 5 10) " (* 5 10))           # 50',
+        '(print "(* -5 10) " (* -5 10))         # -50',
+        '(print "(* 5 0) " (* 5 0))             # 0',
+        '(print "(* -5 -10) " (* -5 -10))       # 50',
+        '(print "(/ 10 5) " (/ 10 5))           # 2',
+        '(print "(/ -10 5) " (/ -10 5))         # -2',
+        # '(print "(/ 5 0) " (/ 5 0))             # error',
+        '(print "(/ -10 -5) " (/ -10 -5))       # 2',
+        '(print "(% 10 3) " (% 10 3))           # 1',
+        '(print "(% -10 3) " (% -10 3))         # 2',
+        # '(print "(% 5 0) " (% 5 0))             # error',
+        '(print "(% -10 -3) " (% -10 -3))       # -1',
+        '(print "(> 5 5) " (> 5 5))           # false',
+        '(print "(> 10 5) " (> 10 5))         # true',
+        '(print "(< -5 5) " (< -5 5))         # true',
+        '(print "(< 0 -10) " (< 0 -10))       # false',
+        '(print "(<= 5 5) " (<= 5 5))         # true',
+        '(print "(<= -5 5) " (<= -5 5))       # true',
+        '(print "(>= 5 5) " (>= 5 5))         # true',
+        '(print "(>= 10 -5) " (>= 10 -5))     # true',
+        '(print "(== 5 5) " (== 5 5))         # true',
+        '(print "(== -5 -5) " (== -5 -5))     # true',
+        '(print "(!= 5 5) " (!= 5 5))         # false',
+        '(print "(!= -5 5) " (!= -5 5))       # true',
+    ')',
+    ')',
+    ')'
+]
+
+
+    # Boolean comparison
+    boolean_comparison = [
+        '(class main',
+        '(field some_object null)',
+        '(method main ()',
+        '(begin',
+            '(print "(+ 10 5) " (+ 10 5))          # 15',
+            '(print "(> 10 5) " (> 10 5))          # true',
+            '(print "(+ hello world) " (+ "hello" "world"))    # helloworld',
+            '(print "(>= "foo" "bar") " (>= "foo" "bar"))       # true',
+            '(print "(& true false) " (& true false))      # false',
+            '(print "(== some_object null) " (== some_object null))   # true',
+            '(print "(! false) " (! false))          # true',
+            '(print "(& true true) " (& true true))      # true',
+            '(print "(& true false) " (& true false))     # false',
+            '(print "(| false false) " (| false false))    # false',
+            '(print "(| (& true false) (! false))) " (| (& true false) (! false)))    # false',
+            '(print (| true false))     # true',
+            '(print (! true))           # false',
+            '(print (! false))          # true',
+            '(print (== true true))     # true',
+            '(print (== true false))    # false',
+            '(print (!= false true))    # true',
+        ')',
+        ')',
+        ')'
+    ]
+
+    # String comparison
+    string_comparison = [
+        '(class main',
+        '(field some_object null)',
+        '(method main ()',
+        '(begin',
+        '(print "(== hello hello) " (== "hello" "hello"))',   # true
+        '(print "(== hello world) " (== "hello" "world"))',  # false
+        '(print "(!= hello world) " (!= "hello" "world"))',  # true
+        '(print "(< apple banana) " (< "apple" "banana"))',   # true
+        '(print "(<= banana banana) " (<= "banana" "banana"))', # true
+        '(print "(> dog cat) " (> "dog" "cat"))',         # true
+        '(print "(>= cat bat) " (>= "cat" "bat"))',        # true
+        ')',
+        ')',
+        ')'
+    ]
+
+    # Null comparison
+    null_comparison = [
+        '(class main',
+        '(field object null)'
+        '(method main ()',
+        '(begin',
+        '(print "(== null object) " (== null object))',   # true
+        '(print "(!= null object) " (!= null object))',   # false
+        '(set object (new main))',
+        '(print "Object is now non-null")'
+        '(print "(== null object) " (== null object))', # false
+        '(print "(!= null object) " (!= null object))',   # true
+        ')',
+        ')',
+        ')'
+    ]
+
+    # Note that the strings inside the parentheses are now double-quoted, without any escape characters, and the parentheses themselves are enclosed in single quotes.
+
     # Parameter other call test - be able to call a method in another class with parameters on it
     parameter_other_call_test = [
         '(class animal',
@@ -216,6 +325,7 @@ def get_test_programs():
 
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
             'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test,
+            'integer_comparison': integer_comparison, 'boolean_comparison': boolean_comparison, 'string_comparison': string_comparison, 'null_comparison': null_comparison,
              'parameter_scoping_test': parameter_scoping_test, 'if_statement': if_statement, 'if_else_statement': if_else_statement, 'while_statement_false': while_statement_false,
              'while_statement_counting_down': while_statement_counting_down, 'input_int_test': input_int_test, 'input_str_test': input_str_test}
 
