@@ -307,9 +307,17 @@ class ObjectDefinition:
     def __execute_while_statement(self, statement):
         pass
 
-    def __execute_if_statement(self, statement):
-        pass
+    def __execute_if_statement(self, statement):        
+        should_execute = self.evaluate_expression(statement[1])
+        # Handles variant of if (expr) (statemetnA)
+        if should_execute:
+            return self.__run_statement(statement[2])
+        # Handles variant of if (expr) (statementA) (statementB)
+        elif not should_execute and len(statement) == 4:
+            return self.__run_statement(statement[3])
 
+        return None
+    
     def __execute_return_statement(self, statement):
         pass
 
