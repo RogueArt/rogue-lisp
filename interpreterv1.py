@@ -249,14 +249,22 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
-        self.interpreter.output(' '.join(formatted_arguments))
+        self.interpreter_base.output(' '.join(formatted_arguments))
         return
 
     def __execute_set_statement(self, statement):
-        field_name, val = statement[1], statement[2]
-        if isinstance(val, list):
-            val = self.evaluate_expression(val)
-        val = self.__parse_str_into_python_value(val)
+        # Get the simplified result of the expression:
+        field_name, expression = statement[1], statement[2]
+
+        # Handle case in which we need to instantiate a new object
+        if isinstance(expression, list) and len(expression) == 2 and expression[0] == 'new':
+            # Get the class and instantiate a new object of this class
+            class_def = self.interpreter.find_definition_for_class(
+                expression[1])
+            val = class_def.instantiate_object()
+        # Otherwise, treat everything as expressions
+        else:
+            val = self.evaluate_expression(expression)
         self.update_variable_with_name(field_name, val)
         return
 
