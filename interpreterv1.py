@@ -10,10 +10,11 @@ debug = 0
 
 
 class MethodDefinition:
-    def __init__(self, method_name: str, top_level_statement: list, parameters: List[str]):
+    def __init__(self, method_name: str, top_level_statement: list, parameter_names: List[str]):
         self.method_name = method_name
         self.top_level_statement = top_level_statement
-        self.parameters = parameters
+        self.parameter_names = parameter_names
+        self.parameter_values = []
         pass
 
     # Returns the top-level statement list
@@ -39,6 +40,9 @@ class ObjectDefinition:
         self.fields = fields
         self.result = None
 
+        # TO-DO: Implement this for scoping
+        self.parameters = []
+
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
     def call_method(self, method_name: str, parameters: List[str]):
@@ -49,9 +53,9 @@ class ObjectDefinition:
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
-    def __run_statement(self, statement: List[any], parameters: List[str]):
-        # TO-DO: Make this into a private variable
-        print(statement)
+    def __run_statement(self, statement: List[any]):
+        if debug >= 1:
+            print(statement)
 
         if self.is_a_print_statement(statement):
             self.result = self.__execute_print_statement(statement)
@@ -83,7 +87,7 @@ class ObjectDefinition:
         return False
 
     def is_a_call_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.CALL_DEF
 
     def is_a_while_statement(self, statement):
         return False
@@ -140,7 +144,7 @@ class ObjectDefinition:
             return value[1:-1]
         elif self.__is_integer_in_string_form(value):
             return int(value)
-        elif self.is_variable_name():
+        elif self.has_variable_with_name(value):
             return self.get_variable_with_name(value)
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
@@ -241,7 +245,7 @@ class ObjectDefinition:
                 formatted_arguments.append(str(self.evaluate_expression(arg)))
             elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
                 formatted_arguments.append(arg[1:-1])
-            elif isinstance(arg, str) and arg.lower() in ['true', 'false', 'null'] or arg.isnumeric():
+            elif isinstance(arg, str) and arg.lower() in [InterpreterBase.TRUE_DEF, InterpreterBase.FALSE_DEF, InterpreterBase.NULL_DEF] or arg.isnumeric():
                 formatted_arguments.append(str(arg))
             else:
                 variable_name = arg
@@ -249,7 +253,7 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
-        self.interpreter_base.output(' '.join(formatted_arguments))
+        self.interpreter_base.output(''.join(formatted_arguments))
         return
 
     def __execute_set_statement(self, statement):
@@ -257,7 +261,7 @@ class ObjectDefinition:
         field_name, expression = statement[1], statement[2]
 
         # Handle case in which we need to instantiate a new object
-        if isinstance(expression, list) and len(expression) == 2 and expression[0] == 'new':
+        if isinstance(expression, list) and len(expression) == 2 and expression[0] == InterpreterBase.NEW_DEF:
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(
                 expression[1])
@@ -325,9 +329,9 @@ class ClassDefinition:
 
 
 class Interpreter(InterpreterBase):
-    def __init__(self, console_ouptput=True, trace_output=False):
+    def __init__(self, console_ouptput=True, inp=None, trace_output=False):
         # call InterpreterBase's constructor
-        super().__init__(console_ouptput, trace_output)
+        super().__init__(console_ouptput, inp)
 
         self.interpreter_base = super()
         self.class_definitions = dict()
@@ -349,7 +353,6 @@ class Interpreter(InterpreterBase):
         class_def = self.find_definition_for_class("main")
         obj = class_def.instantiate_object()
         obj.call_method("main", [])
-        # print(3)
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
