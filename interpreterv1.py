@@ -413,15 +413,24 @@ class Interpreter(InterpreterBase):
 if __name__ == "__main__":
     # file_name = './examples/example1.txt'
     # program = [line.strip() for line in open(file_name)]
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    RESET = '\033[0m'
 
     test_programs = get_test_programs()
-    skip_tests = ['simple', 'many_fields', 'set_fields']  # , 'set_fields'
+    # skip_tests = ['set_fields']  # , 'set_fields'
+    skip_tests = []
+    # run_tests = ['object_instantiation']
+    run_tests = []
     for count, (program_name, program) in enumerate(test_programs.items()):
-        if program_name in skip_tests:
-            print(f"Skipping test #{count+1} {program_name}")
+        if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
+            print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
             continue
 
-        print(f"Running test #{count+1} {program_name}:")
-        interpreter = Interpreter()
-        interpreter.run(program)
-        print(f"Finished testing {program_name}\n\n")
+        if (len(run_tests) > 0 and program_name in run_tests) or len(run_tests) == 0:
+            print(GREEN + f"Running test #{count+1} {program_name}:" + RESET)
+            interpreter = Interpreter()
+            interpreter.run(program)
+            print(GREEN + f"Finished testing {program_name}\n\n" + RESET)
