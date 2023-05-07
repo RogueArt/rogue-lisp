@@ -246,6 +246,26 @@ class ObjectDefinition:
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
+    def is_operand_compatible_with_operator(self, operator: str, operand) -> bool:
+        if isinstance(operand, str) and operator == '+':
+            return True  # String concatenation is allowed with the + operator
+        elif isinstance(operand, int) and operator in ['+', '-', '*', '/', '%']:
+            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
+        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
+            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
+        elif operand is None and operator in ['==', '!=']:
+            return True  # Null comparison is allowed with the == and != operators
+        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
+            return True # Object comparison is allowed with the == and != operators 
+        elif operator == '!':
+            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
+        else:
+            return False  # Operand and operator are not compatible
+
     def __execute_print_statement(self, statement):
         # Two cases to handle:
         # 1. Value - we can format and print this directly
