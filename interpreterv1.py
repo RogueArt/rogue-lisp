@@ -6,6 +6,7 @@ import copy
 
 # Testing only
 from testing import get_test_programs, fn
+debug = 0
 
 
 class MethodDefinition:
@@ -274,6 +275,8 @@ class ObjectDefinition:
         pass
 
     def __execute_all_sub_statements_of_begin_statement(self, statement):
+        for sub_statement in statement[1:]:
+            self.__run_statement(sub_statement)
         pass
 
 
@@ -313,7 +316,9 @@ class Interpreter(InterpreterBase):
             print('Parsing failed. Please check the input file.')
             return
         else:
-            fn(parsed_program)
+            if (debug >= 2):
+                fn(parsed_program)
+            pass
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
@@ -386,13 +391,13 @@ if __name__ == "__main__":
     # program = [line.strip() for line in open(file_name)]
 
     test_programs = get_test_programs()
-    skip_tests = ['simple', 'many_fields']  # , 'set_fields'
+    skip_tests = ['simple', 'many_fields', 'set_fields']  # , 'set_fields'
     for count, (program_name, program) in enumerate(test_programs.items()):
         if program_name in skip_tests:
-            print(f"Skipping test #{count} {program_name}")
+            print(f"Skipping test #{count+1} {program_name}")
             continue
 
-        print(f"Running test #{count} {program_name}:")
+        print(f"Running test #{count+1} {program_name}:")
         interpreter = Interpreter()
         interpreter.run(program)
         print(f"Finished testing {program_name}\n\n")
