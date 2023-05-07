@@ -17,21 +17,21 @@ def get_test_programs():
                    '(field name "unknown")',
                    '(field _awesome true)',
                    '(field obj_ref_field_puppy null)',
-                   '(method main () (print "The value is" foo_123 "and" name "and" _awesome "and" obj_ref_field_puppy (% 3 2)))',
+                   '(method main () (print "The value is " foo_123 " and " name " and " _awesome " and " obj_ref_field_puppy " and value is " (% 3 2)))',
                    ')']
 
     # Begin test - prints 3 different statements in a row, building on top of hello world
     simple_begin_test = ['(class main',
-                  '(field foo_123 10)',
-                  '(field name "unknown")',
-                  '(field _awesome true)',
-                  '(field obj_ref_field_puppy null)',
-                  '(method main () (begin',
-                  '(print "foo_123 is" foo_123)',
-                  '(print "name is" name)',
-                  '(print "_awesome is" _awesome)'
-                  ')',
-                  '))']
+                         '(field foo_123 10)',
+                         '(field name "unknown")',
+                         '(field _awesome true)',
+                         '(field obj_ref_field_puppy null)',
+                         '(method main () (begin',
+                         '(print "foo_123 is " foo_123)',
+                         '(print "name is " name)',
+                         '(print "_awesome is " _awesome)'
+                         ')',
+                         '))']
 
     # Nested begin test - prints 3 different statements in a row
     # Same as the simple one, but now there are nested begin statements
@@ -42,13 +42,13 @@ def get_test_programs():
                          '(field obj_ref_field_puppy null)',
                          '(method main () (begin',
                          '(begin'
-                         '(print "foo_123 is" foo_123)',
+                         '(print "foo_123 is " foo_123)',
                          ')',
                          '(begin'
                          '(begin'
                          '(begin'
-                         '(print "name is" name)',
-                         '(print "_awesome is" _awesome)'
+                         '(print "name is " name)',
+                         '(print "_awesome is " _awesome)'
                          'begin',
                          ')'
                          ')',
@@ -56,9 +56,11 @@ def get_test_programs():
                          ')',
                          '))']
 
-    # Set test - builds on top of begin & fields test, but additionally also call object instantiation
-    set_fields = ['(class main', '(field foo_123 10)', '(field name "unknown")', '(field _awesome true)', '(field obj_ref_field_puppy null)', '(method main ()',
-                  '(begin', '(set foo_123 (+ 20 50))', '(set name true)', '(set _awesome 0)', '(set obj_ref_field_puppy (new puppy))' '(print "The value is" foo_123 "and" name "and" _awesome "and" obj_ref_field_puppy (% 3 2)))', ')', ')']
+    # Set test - builds on top of begin & fields test
+    # Additionally tests object instantiation as well
+    set_fields = ['(class puppy', '(method bark ()', '(print "woof!")', ')', ')', '(class main', '(field foo_123 10)', '(field name "unknown")', '(field _awesome true)', '(field obj_ref_field_puppy null)', '(method main ()',
+                  '(begin', '(set foo_123 (+ 20 50))', '(set name true)', '(set _awesome 0)', '(set obj_ref_field_puppy (new puppy))' '(print "The value is " foo_123 " and " name " and " _awesome " and value is " (% 3 2)))', ')', ')']
+
 
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields}
 
