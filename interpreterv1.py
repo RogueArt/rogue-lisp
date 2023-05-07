@@ -260,7 +260,7 @@ class ObjectDefinition:
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
-            operand = self.__parse_str_into_python_value(operand)
+            operand = self.evaluate_expression(operand)
 
             if not isinstance(operand, bool):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
