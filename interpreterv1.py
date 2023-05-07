@@ -373,8 +373,15 @@ class Interpreter(InterpreterBase):
 if __name__ == "__main__":
     # file_name = './examples/example1.txt'
     # program = [line.strip() for line in open(file_name)]
-    programs = get_sample_programs()
-    program = programs['many_fields']
 
-    interpreter = Interpreter()
-    interpreter.run(program)
+    test_programs = get_test_programs()
+    skip_tests = ['simple', 'many_fields']  # , 'set_fields'
+    for count, (program_name, program) in enumerate(test_programs.items()):
+        if program_name in skip_tests:
+            print(f"Skipping test #{count} {program_name}")
+            continue
+
+        print(f"Running test #{count} {program_name}:")
+        interpreter = Interpreter()
+        interpreter.run(program)
+        print(f"Finished testing {program_name}\n\n")
