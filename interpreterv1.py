@@ -173,7 +173,6 @@ class ObjectDefinition:
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
 
-    # TO-DO: Figure out why this is getting an int
     def __is_integer_in_string_form(self, s: str | int):
         if s[0] in ('-', '+'):
             return s[1:].isdigit()
@@ -186,20 +185,15 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             # TO-DO: Figure out why this is getting a listw
             # Received an integer value
-            if isinstance(expression, int):
-                return expression
+            # if isinstance(expression, int):
+            #     return expression
             # Received a string value
-            else:
-                return self.__parse_str_into_python_value(expression)
+            # else:
+            return self.__parse_str_into_python_value(expression)
 
         # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
-            operand1 = self.__parse_str_into_python_value(operand1)
-            operand2 = self.__parse_str_into_python_value(operand2)
-            # TO-DO: Handle variable names for operands
-
-            # TO-DO: Store the evaluate express code here to improve code reuse
             match operator:
                 case '+':
                     return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
