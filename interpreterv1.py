@@ -84,6 +84,7 @@ class ObjectDefinition:
         self.interpreter = interpreter
         self.methods = methods
         self.fields = fields
+        self.result = None
 
     # Interpret the specified method using the provided parameters
     def call_method(self, method_name: str, parameters: List[str]):
@@ -105,24 +106,25 @@ class ObjectDefinition:
         print(statement)
 
         if self.is_a_print_statement(statement):
-            result = self.__execute_print_statement(statement)
+            self.result = self.__execute_print_statement(statement)
         elif self.is_a_set_statement(statement):
-            result = self.__execute_set_statement(statement)
+            self.result = self.__execute_set_statement(statement)
         elif self.is_an_input_statement(statement):
-            result = self.__execute_input_statement(statement)
+            self.result = self.__execute_input_statement(statement)
         elif self.is_a_call_statement(statement):
-            result = self.__execute_call_statement(statement)
+            self.result = self.__execute_call_statement(statement)
         elif self.is_a_while_statement(statement):
-            result = self.__execute_while_statement(statement)
+            self.result = self.__execute_while_statement(statement)
         elif self.is_an_if_statement(statement):
-            result = self.__execute_if_statement(statement)
+            self.result = self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
-            result = self.__execute_return_statement(statement)
+            self.result = self.__execute_return_statement(statement)
         elif self.is_a_begin_statement(statement):
-            result = self.__execute_all_sub_statements_of_begin_statement(
+            self.result = self.__execute_all_sub_statements_of_begin_statement(
                 statement)
-        return result
+        return self.result
 
+    # <========== MATCH STATEMENT ============>
     def is_a_print_statement(self, statement):
         return statement[0] == InterpreterBase.PRINT_DEF
 
