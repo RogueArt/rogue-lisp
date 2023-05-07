@@ -99,10 +99,10 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.CALL_DEF
 
     def is_a_while_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.WHILE_DEF
 
     def is_an_if_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.IF_DEF
 
     def is_a_return_statement(self, statement):
         return False
@@ -305,7 +305,13 @@ class ObjectDefinition:
         return
 
     def __execute_while_statement(self, statement):
-        pass
+        should_execute = self.evaluate_expression(statement[1])
+        while should_execute:
+            self.result = self.__run_statement(statement[2])
+            should_execute = self.evaluate_expression(statement[1])
+        
+        self.result = None
+        return
 
     def __execute_if_statement(self, statement):        
         should_execute = self.evaluate_expression(statement[1])
@@ -446,8 +452,8 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['parameter_scoping_test']
     run_tests = []
+    # run_tests = []
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
             print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
