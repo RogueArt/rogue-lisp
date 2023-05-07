@@ -208,31 +208,31 @@ class ObjectDefinition:
 
             match operator:
                 case '+':
-                    return self.evaluate_expression(operand1) + self.evaluate_expression(operand2)
+                    return operand1 + operand2
                 case '-':
-                    return self.evaluate_expression(operand1) - self.evaluate_expression(operand2)
+                    return operand1 - operand2
                 case '*':
-                    return self.evaluate_expression(operand1) * self.evaluate_expression(operand2)
+                    return operand1 * operand2
                 case '/':
-                    return self.evaluate_expression(operand1) // self.evaluate_expression(operand2)
+                    return operand1 // operand2
                 case '%':
-                    return self.evaluate_expression(operand1) % self.evaluate_expression(operand2)
+                    return operand1 % operand2
                 case '==':
-                    return self.evaluate_expression(operand1) == self.evaluate_expression(operand2)
+                    return operand1 == operand2
                 case '!=':
-                    return self.evaluate_expression(operand1) != self.evaluate_expression(operand2)
+                    return operand1 != operand2
                 case '>':
-                    return self.evaluate_expression(operand1) > self.evaluate_expression(operand2)
+                    return operand1 > operand2
                 case '<':
-                    return self.evaluate_expression(operand1) < self.evaluate_expression(operand2)
+                    return operand1 < operand2
                 case '>=':
-                    return self.evaluate_expression(operand1) >= self.evaluate_expression(operand2)
+                    return operand1 >= operand2
                 case '<=':
-                    return self.evaluate_expression(operand1) <= self.evaluate_expression(operand2)
+                    return operand1 <= operand2
                 case '&':
-                    return self.evaluate_expression(operand1) and self.evaluate_expression(operand2)
+                    return operand1 and operand2
                 case '|':
-                    return self.evaluate_expression(operand1) or self.evaluate_expression(operand2)
+                    return operand1 or operand2
 
         # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
