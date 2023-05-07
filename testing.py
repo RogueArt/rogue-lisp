@@ -194,7 +194,7 @@ def get_test_programs():
         '(begin',
         '(print "Please enter a number: ")'
         '(inputi x) # input value from user, store in x variable',
-        '(print "the user typed in " x)',
+        '(print "3 more than what the user typed in is " (+ x 3))',
         ')',
         ')',
         ')'
@@ -207,7 +207,7 @@ def get_test_programs():
         '(begin',
         '(print "Please enter your favorite game: ")'
         '(inputs x) # input value from user, store in x variable',
-        '(print "the user typed in " x)',
+        '(print (+ "The user\'s favorite game is: " x))',
         ')',
         ')',
         ')'
