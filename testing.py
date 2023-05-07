@@ -88,12 +88,35 @@ def get_test_programs():
         ')',
         ')'
     ]
-    # Parameter self call test - be able to call a method in own class with parameters on it
-    # parameter_other_call_test = ['class animal', '(method speak (type age sound)', '(print "I am a " type " who is " age " year(s) old and goes " sound)', ')', '(class main',
-    #                              '  (field animal_ref null)', '  (method main ()', '(begin', '  (set animal_ref (new animal))', '  (call animal_ref speak "dog" 20 "woof!")', ')', ')', ')']
+
+    # Parameter scoping test - be able to call a method in another class with parameters in it
+    # Tests three different cases
+    # 1. Value is present in parameter only
+    # 2. Value is present in field only
+    # 3. Value in both parameter and field, parameter takes precedence
+    parameter_scoping_test = [
+        '(class animal',
+        '(field type "unknown")',
+        '(field age 20)',
+        '(method speak (type sound)',
+        '(print "I am a " type " who is " age " year(s) old and goes " sound)',
+        ')',
+        ')',
+        '(class main',
+        '(field animal_ref null)',
+        '(method main ()',
+        '(begin',
+        '(set animal_ref (new animal))',
+        '(call animal_ref speak "dog" "woof!")',
+        ')',
+        ')',
+        ')'
+    ]
+
+    # Recursion test - be able to repeatedly call a method in a class until we hit a base case
 
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
-            'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test}
+            'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test, 'parameter_scoping_test': parameter_scoping_test}
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level

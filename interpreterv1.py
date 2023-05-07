@@ -40,18 +40,24 @@ class ObjectDefinition:
         self.fields = fields
         self.result = None
 
-        # TO-DO: Implement this for scoping
-        self.parameters = []
+        self.parameter_stack: List[Dict[str, None|int|bool|str]] = []
+        self.parameters: Dict[str, None|int|bool|str] = {}
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name: str, parameters: Dict[str, None|int|bool|str]):
+    def call_method(self, method_name: str, parameters_map: Dict[str, None|int|bool|str]):
         # Add the parameter list to the call stack
-        
-    
+        self.parameter_stack.append(parameters_map)
+        self.parameters = self.parameter_stack[-1]
+
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement)
+
+        # Pop the parameter list from the call stack
+        self.parameter_stack.pop()
+        # self.parameters = self.parameter_stack[-1]
+        
         return result
 
     # runs/interprets the passed-in statement until completion and
@@ -161,7 +167,7 @@ class ObjectDefinition:
         elif value is None:
             return InterpreterBase.NULL_DEF
         elif isinstance(value, str):
-            return '"' + value + '"'
+            return value # '"' + value + '"'
         elif isinstance(value, int):
             return str(value)
         else:
@@ -301,7 +307,7 @@ class ObjectDefinition:
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
-        obj.call_method(method_name, param_expressions)
+        obj.call_method(method_name, parameter_map)
         return
 
     def __execute_while_statement(self, statement):
@@ -438,8 +444,8 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['object_instantiation']
-    run_tests = ['parameter_other_call_test']
+    # run_tests = ['parameter_scoping_test']
+    run_tests = []
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
             print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
