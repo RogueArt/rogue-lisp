@@ -38,7 +38,8 @@ class ObjectDefinition:
         self.interpreter_base = interpreter_base
         self.methods = methods
         self.fields = fields
-        self.result = None
+        self.terminated = False
+        self.final_result = None
 
         self.parameter_stack: List[Dict[str, None|int|bool|str]] = []
         self.parameters: Dict[str, None|int|bool|str] = {}
@@ -49,16 +50,21 @@ class ObjectDefinition:
         # Add the parameter list to the call stack
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
+        self.terminated = False
 
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
         result = self.__run_statement(statement)
 
+        # Reset the conditions
         # Pop the parameter list from the call stack
         self.parameter_stack.pop()
-        # self.parameters = self.parameter_stack[-1]
+        self.parameters = self.parameter_stack[-1] if len(self.parameter_stack) > 0 else {}
+        self.terminated = False
         
-        return result
+        # result = self.result
+        # self.result = None
+        return self.final_result
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -66,6 +72,12 @@ class ObjectDefinition:
         if debug >= 1:
             print(statement)
 
+        if self.terminated:
+            return self.result
+        
+        # TO-DO: This does literally nothing for the final result
+        # Clean this up
+        self.result = None
         if self.is_a_print_statement(statement):
             self.result = self.__execute_print_statement(statement)
         elif self.is_a_set_statement(statement):
@@ -80,9 +92,12 @@ class ObjectDefinition:
             self.result = self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
             self.result = self.__execute_return_statement(statement)
+            self.terminated = True
         elif self.is_a_begin_statement(statement):
             self.result = self.__execute_all_sub_statements_of_begin_statement(
                 statement)
+        
+        # Default return is None if no other statements updated it
         return self.result
 
     # <========== MATCH STATEMENT ============>
@@ -105,7 +120,7 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.IF_DEF
 
     def is_a_return_statement(self, statement):
-        return False
+        return statement[0] == InterpreterBase.RETURN_DEF
 
     def is_a_begin_statement(self, statement):
         return statement[0] == InterpreterBase.BEGIN_DEF
@@ -191,7 +206,12 @@ class ObjectDefinition:
             # else:
             return self.__parse_str_into_python_value(expression)
 
-        # Case 3: Reached a triple -- we need to recurse and evaluaute this binary expression
+        # Case 4: Reached a call statement
+        if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
+            val = self.__execute_call_statement(expression)
+            return val
+
+        # Case 4: Reached a triple -- we need to recurse and evaluaute this binary expression       
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
@@ -295,7 +315,7 @@ class ObjectDefinition:
         self.interpreter_base.output(''.join(formatted_arguments))
         return
 
-    def __execute_set_statement(self, statement):
+    def __execute_set_statement(self, statement) -> None:
         # Get the simplified result of the expression:
         field_name, expression = statement[1], statement[2]
 
@@ -311,7 +331,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, val)
         return
 
-    def __execute_input_statement(self, statement):
+    def __execute_input_statement(self, statement) -> None:
         input_type, field_name = statement
 
         # Get and parse the user's input value
@@ -325,7 +345,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, value)
         return
 
-    def __execute_call_statement(self, statement):
+    def __execute_call_statement(self, statement) -> None|int|str|bool:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
@@ -348,19 +368,20 @@ class ObjectDefinition:
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
-        obj.call_method(method_name, parameter_map)
-        return
+        self.result = obj.call_method(method_name, parameter_map)
+        return self.result
 
-    def __execute_while_statement(self, statement):
+    def __execute_while_statement(self, statement) -> None|int|str|bool:
+        result = None
+
         should_execute = self.evaluate_expression(statement[1])
         while should_execute:
-            self.result = self.__run_statement(statement[2])
+            result = self.__run_statement(statement[2])
             should_execute = self.evaluate_expression(statement[1])
         
-        self.result = None
-        return
+        return result
 
-    def __execute_if_statement(self, statement):        
+    def __execute_if_statement(self, statement) -> None|int|str|bool:        
         should_execute = self.evaluate_expression(statement[1])
         # Handles variant of if (expr) (statemetnA)
         if should_execute:
@@ -371,8 +392,20 @@ class ObjectDefinition:
 
         return None
     
-    def __execute_return_statement(self, statement):
-        pass
+    def __execute_return_statement(self, statement) -> None|int|str|bool:
+        # Get the final return value
+        if len(statement) == 1:
+            self.final_result = None
+            return None
+        
+        # We do two things here
+        # 1. Any expression evaluated in return statement is the "final" value of method call
+        val = self.evaluate_expression(statement[1])
+        self.final_result = val
+
+        # 2. Set a terminated flag to block any further execution of sibling statements
+        self.terminated = True
+        return val
 
     def __execute_all_sub_statements_of_begin_statement(self, statement):
         for sub_statement in statement[1:]:

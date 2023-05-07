@@ -309,6 +309,7 @@ def get_test_programs():
         ')'
     ]
 
+    # Same as above, but with strings and concatenation this time
     input_str_test = [
         '(class main',
         '(field x "player unknowns battlegrounds")',
@@ -322,12 +323,63 @@ def get_test_programs():
         ')'
     ]
 
+    # Non-control flow return - regular return statement to test evaluating expressions and returning correct value
+    non_control_flow_return = [
+        '(class dog',
+        '# Case 1 - Test a single, constant string return value',
+        '(method get_sound ()',
+        '(begin',
+        '(return "Woof!")',
+        '(print "get_sound - I should never be printed")',
+        ')',
+        ')',
+        '# Case 2 - Test simple mathematical expression',
+        '(method get_dog_age_multiplier () # Constant 7',
+        '(begin',
+        '(return (+ 5 2))',
+        '(print "get_dog_age_multiplier - I should never be printed")',
+        ')',
+        ')',
+        '# Case 3 - Expression evaluation within a return',
+        '(method get_dog_age (human_age)',
+        '(begin',
+        '(return (* (call me get_dog_age_multiplier) human_age))',
+        '(print "get_dog_age - I should never be printed")',
+        ')',
+        ')',
+        '# Case 4 - Expression evaluation with',
+        '(method speak ()',
+        '(begin',
+        '(print (call me get_sound))',
+        '(return)',
+        '(print "speak - I should never be printed")',
+        ')',
+        ')',
+        ')',
+        '(class main',
+        '(field puppy_ref null)',
+        '(method main ()',
+        '(begin',
+        '(set puppy_ref (new dog))',
+        '(print "Dog says " (call puppy_ref get_sound))',
+        '(print "Dog says his age is: " (call puppy_ref get_dog_age 10))',
+        '(print "Dog spoke! (expect None) - " (call puppy_ref speak))',
+        ')',
+        ')',
+        ')'
+    ]
+    # Expected output:
+    # Dog says Woof!
+    # Dog says 70
+    # Woof!
+    # Dog speaks: (expect None) - None
+
 
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
             'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test,
             'integer_comparison': integer_comparison, 'boolean_comparison': boolean_comparison, 'string_comparison': string_comparison, 'null_comparison': null_comparison,
              'parameter_scoping_test': parameter_scoping_test, 'if_statement': if_statement, 'if_else_statement': if_else_statement, 'while_statement_false': while_statement_false,
-             'while_statement_counting_down': while_statement_counting_down, 'input_int_test': input_int_test, 'input_str_test': input_str_test}
+             'while_statement_counting_down': while_statement_counting_down, 'input_int_test': input_int_test, 'input_str_test': input_str_test, 'non_control_flow_return': non_control_flow_return}
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
