@@ -78,7 +78,6 @@ class ObjectDefinition:
             self.result = self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
             self.result = self.__execute_return_statement(statement)
-            
             # Use this to block executing of any sibling methods
             self.terminated = True
         elif self.is_a_begin_statement(statement):
@@ -289,13 +288,7 @@ class ObjectDefinition:
             return False  # Operand and operator are not compatible
 
     def __execute_print_statement(self, statement):
-        # Two cases to handle:
-        # 1. Value - we can format and print this directly
-        # 2. Variable - we must do a lookup for the variable name
-        # 3. Expression - we must do a calculation for this value
 
-        # TO-DO: Refactor
-        # TO-DO: Handle function calls
         formatted_arguments = []
         for arg in statement[1:]:
             if isinstance(arg, list):
@@ -325,9 +318,7 @@ class ObjectDefinition:
         if not self.has_variable_with_name(field_name):
             self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-        # Handle case in which we need to instantiate a new object
-        # Otherwise, treat everything as expressions
-        # else:
+        # Evaluate expressions befoer setting value
         val = self.evaluate_expression(expression)
         self.update_variable_with_name(field_name, val)
         return
