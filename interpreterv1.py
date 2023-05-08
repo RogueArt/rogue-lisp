@@ -148,7 +148,7 @@ class ObjectDefinition:
             return self.parameters[name]
 
         # 2. Check field level scope for object
-        return self.fields[name] if name in self.fields else None
+        return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
@@ -588,8 +588,8 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['test_inline_instantiation'] # 'test_set_instantiation',
-    run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
+    run_tests = []
+    # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
             print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
