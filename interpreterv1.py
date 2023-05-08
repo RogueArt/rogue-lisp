@@ -126,7 +126,10 @@ class ObjectDefinition:
 
     #  <========== GETTERS AND SETTERS ===========>
     def get_method_with_name(self, method_name: str) -> MethodDefinition:
-        return self.methods[method_name]
+        if method_name in self.methods:
+            return self.methods[method_name]
+        else:
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # Account for scoping
     # Note: we have to explicitly check for this as Python only has "None", not "undefined"
@@ -364,6 +367,11 @@ class ObjectDefinition:
         # We evaluate each expression and create a map of parameter names to values
         parameter_map = {}
         method = obj.get_method_with_name(method_name)
+
+        # Number of parameters does not match the method definition
+        if len(param_expressions) != len(method.parameter_names):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         for index, expression in enumerate(param_expressions):
             # Get the value for each variable name
             value = obj.evaluate_expression(expression)
