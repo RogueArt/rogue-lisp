@@ -5,7 +5,6 @@ from pprint import pprint
 import copy
 
 # Testing only
-from testing import get_test_programs, fn
 debug = 0
 
 
@@ -217,7 +216,6 @@ class ObjectDefinition:
             val = class_def.instantiate_object()
 
             # Add this to our fields / parameters
-            self.update_variable_with_name(field_name, val)
             return val
                 
 
@@ -324,7 +322,8 @@ class ObjectDefinition:
                 formatted_value = self.__convert_python_value_to_str(value)
                 formatted_arguments.append(formatted_value)
 
-        # print(formatted_arguments)
+        if debug >= 1:
+            print(formatted_arguments)
         self.interpreter_base.output(''.join(formatted_arguments))
         return
 
@@ -382,9 +381,9 @@ class ObjectDefinition:
         result = None
 
         should_execute = self.evaluate_expression(statement[1])
-        while should_execute:
-            result = self.__run_statement(statement[2])
-            should_execute = self.evaluate_expression(statement[1])
+        if should_execute and not self.terminated:
+            self.__run_statement(statement[2])
+            self.__execute_while_statement(statement)
         
         return result
 
@@ -528,6 +527,7 @@ class Interpreter(InterpreterBase):
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
+    from testing import get_test_programs, fn
     # file_name = './examples/example1.txt'
     # program = [line.strip() for line in open(file_name)]
     RED = '\033[31m'
@@ -539,9 +539,8 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['parameter_scoping_test']
-    run_tests = []
-    # run_tests = []
+    # run_tests = ['test_inline_instantiation'] # 'test_set_instantiation',
+    run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
             print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
