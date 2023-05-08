@@ -473,6 +473,10 @@ class Interpreter(InterpreterBase):
             # Get class name
             class_name = class_def[1]
 
+            # Duplicate class definitions are not allowed
+            if class_name in self.class_definitions:
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
             # Parse the methods and fields from the object
             methods = self.__get_methods_for_class(class_def)
             fields = self.__get_fields_for_class(class_def)
@@ -490,6 +494,10 @@ class Interpreter(InterpreterBase):
                 method_name: str = statement[1]
                 parameters_list: List[str] = statement[2]
                 top_level_statement = statement[3]
+                
+                # Duplicate method names are not allowed
+                if method_name in methods:
+                    self.interpreter_base.error(ErrorType.NAME_ERROR)
 
                 # Methods map stores <name:MethodDefinition> pairs
                 methods[method_name] = MethodDefinition(
@@ -501,6 +509,11 @@ class Interpreter(InterpreterBase):
         for statement in class_def[2:]:
             if statement[0] == Interpreter.FIELD_DEF:
                 field_name: str = statement[1]
+
+                # Duplicate field names are not allowed
+                if field_name in fields:
+                    self.interpreter_base.error(ErrorType.NAME_ERROR)
+
                 value: List[str] = self.__parse_str_into_python_value(
                     statement[2])
 
