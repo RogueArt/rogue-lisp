@@ -352,7 +352,7 @@ class ObjectDefinition:
 
         for index, expression in enumerate(param_expressions):
             # Get the value for each variable name
-            value = obj.evaluate_expression(expression)
+            value = self.evaluate_expression(expression)
 
             # Update map with the appropriate parameter names
             parameter_name = method.parameter_names[index]
