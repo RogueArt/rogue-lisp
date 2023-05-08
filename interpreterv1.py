@@ -61,9 +61,9 @@ class ObjectDefinition:
         self.parameters = self.parameter_stack[-1] if len(self.parameter_stack) > 0 else {}
         self.terminated = False
         
-        # result = self.result
-        # self.result = None
-        return self.final_result
+        saved_result = self.final_result
+        self.final_result = None
+        return saved_result
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
@@ -203,7 +203,7 @@ class ObjectDefinition:
 
         # Case 4: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
-            val = self.__execute_call_statement(expression)
+            val = self.__run_statement(expression)
             return val
         
         # Case 5: Reached a new statement
@@ -374,6 +374,7 @@ class ObjectDefinition:
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
+        # To-DO: Why am I doing self.result here? Why not just result?
         self.result = obj.call_method(method_name, parameter_map)
         return self.result
 
