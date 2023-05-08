@@ -1,35 +1,22 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from pprint import pprint
 import copy
 
-# Testing only
+NestedList = Union[str, List['NestedList']]
+
+# For debug levels
 debug = 0
-
-
 class MethodDefinition:
     def __init__(self, method_name: str, top_level_statement: list, parameter_names: List[str]):
         self.method_name = method_name
         self.top_level_statement = top_level_statement
         self.parameter_names = parameter_names
-        self.parameter_dict_stack = []
-        pass
 
-    # Returns the top-level statement list
-    # TO-DO: Add a documentation for what this looks like
+    # Top-level statement list in the form of nested lists
     def get_top_level_statement(self):
         return self.top_level_statement
-
-    def get_num_parameters(self):
-        return len(self.parameters)
-
-    def get_parameter_names(self):
-        return self.parameters
-
-    def has_parameter(self, name: str) -> bool:
-        return name in self.parameters
-
 
 class ObjectDefinition:
     def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
@@ -142,7 +129,6 @@ class ObjectDefinition:
         return name in self.fields
 
     def get_variable_with_name(self, name: str) -> None | int | str | bool:
-        # TO-DO: Fix this for method definition
         # 1. Check parameter level scope for method
         if name in self.parameters:
             return self.parameters[name]
@@ -204,42 +190,39 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             return self.__parse_str_into_python_value(expression)
 
-        # Case 4: Reached a call statement
+        # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
             val = self.__run_statement(expression)
             return val
         
-        # Case 5: Reached a new statement
+        # Case 4: Reached a new statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.NEW_DEF:
             # Get the name of the field
             field_name = expression[1]
 
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
-
-
             val = class_def.instantiate_object()
 
-            # Add this to our fields / parameters
             return val
                 
-
-        # Case 6: Reached a triple -- we need to recurse and evaluaute this binary expression       
+        # Case 5: Reached a triple -- we need to recurse and evaluaute this binary expression       
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
             operand1 = self.evaluate_expression(operand1)
             operand2 = self.evaluate_expression(operand2)
 
-            # Case 1: Operands must be of the same type
+            # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
             if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
             
-            # Case 2: Operands must be compatible with operator
+            # Case 5b: Operands must be compatible with operator
             if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
+            # Case 5c: Both are compatible and of same type, so evaluate them
             match operator:
                 case '+':
                     return operand1 + operand2
@@ -268,7 +251,7 @@ class ObjectDefinition:
                 case '|':
                     return operand1 or operand2
 
-        # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
+        # Case 6: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
             operand = self.evaluate_expression(operand)
@@ -279,7 +262,7 @@ class ObjectDefinition:
             if operator == '!':
                 return not operand
 
-        # Case 5: Error - invalid expression format
+        # Case 7: Error - invalid expression format
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
@@ -447,8 +430,6 @@ class ObjectDefinition:
     def __execute_all_sub_statements_of_begin_statement(self, statement):
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
-        pass
-
 
 class ClassDefinition:
     # constructor for a ClassDefinition
@@ -461,16 +442,9 @@ class ClassDefinition:
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, copy.deepcopy(
-            self.methods), copy.deepcopy(self.fields))
-
-        # To-DO: Evaluate if this is a better approach below
-        # for method_name, method_def in self.methods.items():
-        #     obj.add_method(method_name, method_def)
-        # for field_name, field_value in self.fields.items():
-        #     obj.add_field(field_name, field_value)
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, 
+                               copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
-
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -577,8 +551,7 @@ class Interpreter(InterpreterBase):
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
     from testing import get_test_programs, fn
-    # file_name = './examples/example1.txt'
-    # program = [line.strip() for line in open(file_name)]
+
     RED = '\033[31m'
     GREEN = '\033[32m'
     YELLOW = '\033[33m'
