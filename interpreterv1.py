@@ -401,6 +401,11 @@ class ObjectDefinition:
         result = None
 
         should_execute = self.evaluate_expression(statement[1])
+
+        # Should always evaluate to a boolean condition
+        if not isinstance(should_execute, bool):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         if should_execute and not self.terminated:
             self.__run_statement(statement[2])
             self.__execute_while_statement(statement)
@@ -409,6 +414,11 @@ class ObjectDefinition:
 
     def __execute_if_statement(self, statement) -> None|int|str|bool:        
         should_execute = self.evaluate_expression(statement[1])
+
+        # Should always evaluate to a boolean condition
+        if not isinstance(should_execute, bool):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         # Handles variant of if (expr) (statemetnA)
         if should_execute:
             return self.__run_statement(statement[2])
