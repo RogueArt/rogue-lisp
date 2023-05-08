@@ -1,0 +1,8 @@
+(class main
+  (field other null)
+  (method main ()
+    (begin
+      (call other foo)
+    )
+  )
+)

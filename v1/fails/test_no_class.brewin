@@ -1,0 +1,6 @@
+(class main
+  (field x 0)
+  (method main ()
+    (set x (new other_class))
+  )
+)

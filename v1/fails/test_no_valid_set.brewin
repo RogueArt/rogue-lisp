@@ -1,0 +1,9 @@
+(class main
+  (field x 1)
+  (method main ()
+    (begin
+      (set z y)
+      (print x)
+    )
+  )
+)
