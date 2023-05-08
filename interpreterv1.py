@@ -126,7 +126,10 @@ class ObjectDefinition:
 
     #  <========== GETTERS AND SETTERS ===========>
     def get_method_with_name(self, method_name: str) -> MethodDefinition:
-        return self.methods[method_name]
+        if method_name in self.methods:
+            return self.methods[method_name]
+        else:
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # Account for scoping
     # Note: we have to explicitly check for this as Python only has "None", not "undefined"
@@ -145,7 +148,7 @@ class ObjectDefinition:
             return self.parameters[name]
 
         # 2. Check field level scope for object
-        return self.fields[name] if name in self.fields else None
+        return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
         # Check in order of increasing scope
@@ -213,6 +216,8 @@ class ObjectDefinition:
 
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
+
+
             val = class_def.instantiate_object()
 
             # Add this to our fields / parameters
@@ -331,6 +336,10 @@ class ObjectDefinition:
         # Get the simplified result of the expression:
         field_name, expression = statement[1], statement[2]
 
+        # Throw error if the variable we're setting does not exist
+        if not self.has_variable_with_name(field_name):
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
+
         # Handle case in which we need to instantiate a new object
         # Otherwise, treat everything as expressions
         # else:
@@ -357,13 +366,24 @@ class ObjectDefinition:
 
         # Get object based on if it's the current or some other object
         obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name)
+
+        # Call made to object reference of null must generate an error
         if obj is None:
-            raise ErrorType('Could not find object')
+            self.interpreter_base.error(ErrorType.FAULT_ERROR)
 
         # Parameters to the method are any variable, constant, or expression
         # We evaluate each expression and create a map of parameter names to values
         parameter_map = {}
         method = obj.get_method_with_name(method_name)
+
+        # Call made to a method name that does not exist must generate an error
+        if method is None:
+            self.interpreter_base.error(ErrorType.FAULT_ERROR)
+
+        # Number of parameters does not match the method definition
+        if len(param_expressions) != len(method.parameter_names):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         for index, expression in enumerate(param_expressions):
             # Get the value for each variable name
             value = obj.evaluate_expression(expression)
@@ -382,6 +402,11 @@ class ObjectDefinition:
         result = None
 
         should_execute = self.evaluate_expression(statement[1])
+
+        # Should always evaluate to a boolean condition
+        if not isinstance(should_execute, bool):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         if should_execute and not self.terminated:
             self.__run_statement(statement[2])
             self.__execute_while_statement(statement)
@@ -390,6 +415,11 @@ class ObjectDefinition:
 
     def __execute_if_statement(self, statement) -> None|int|str|bool:        
         should_execute = self.evaluate_expression(statement[1])
+
+        # Should always evaluate to a boolean condition
+        if not isinstance(should_execute, bool):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         # Handles variant of if (expr) (statemetnA)
         if should_execute:
             return self.__run_statement(statement[2])
@@ -524,7 +554,12 @@ class Interpreter(InterpreterBase):
         return fields
 
     def find_definition_for_class(self, class_name: str):
-        return self.class_definitions[class_name]
+        # Check if class exists
+        if class_name in self.class_definitions:
+            return self.class_definitions[class_name]
+        
+        # If not found, then throw an error for trying to get invalid class
+        self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
     def __parse_str_into_python_value(self, value: str):
         if value == InterpreterBase.TRUE_DEF:
@@ -553,8 +588,8 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
     skip_tests = []
-    # run_tests = ['test_inline_instantiation'] # 'test_set_instantiation',
-    run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
+    run_tests = []
+    # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
             print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
