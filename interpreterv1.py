@@ -217,9 +217,6 @@ class ObjectDefinition:
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
 
-            # If class definition is unknown, throw an error
-            if class_def is None:
-                self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             val = class_def.instantiate_object()
 
@@ -557,7 +554,12 @@ class Interpreter(InterpreterBase):
         return fields
 
     def find_definition_for_class(self, class_name: str):
-        return self.class_definitions[class_name]
+        # Check if class exists
+        if class_name in self.class_definitions:
+            return self.class_definitions[class_name]
+        
+        # If not found, then throw an error for trying to get invalid class
+        self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
     def __parse_str_into_python_value(self, value: str):
         if value == InterpreterBase.TRUE_DEF:
