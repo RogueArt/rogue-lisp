@@ -270,7 +270,7 @@ class ObjectDefinition:
     def is_operand_compatible_with_operator(self, operator: str, operand) -> bool:
         if isinstance(operand, str) and operator == '+':
             return True  # String concatenation is allowed with the + operator
-        elif isinstance(operand, int) and operator in ['+', '-', '*', '/', '%']:
+        elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
             return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
         elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
             return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
