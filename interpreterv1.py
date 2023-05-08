@@ -1,35 +1,22 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from pprint import pprint
 import copy
 
-# Testing only
+NestedList = Union[str, List['NestedList']]
+
+# For debug levels
 debug = 0
-
-
 class MethodDefinition:
     def __init__(self, method_name: str, top_level_statement: list, parameter_names: List[str]):
         self.method_name = method_name
         self.top_level_statement = top_level_statement
         self.parameter_names = parameter_names
-        self.parameter_dict_stack = []
-        pass
 
-    # Returns the top-level statement list
-    # TO-DO: Add a documentation for what this looks like
+    # Top-level statement list in the form of nested lists
     def get_top_level_statement(self):
         return self.top_level_statement
-
-    def get_num_parameters(self):
-        return len(self.parameters)
-
-    def get_parameter_names(self):
-        return self.parameters
-
-    def has_parameter(self, name: str) -> bool:
-        return name in self.parameters
-
 
 class ObjectDefinition:
     def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
@@ -53,7 +40,7 @@ class ObjectDefinition:
 
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
-        result = self.__run_statement(statement)
+        self.__run_statement(statement)
 
         # Reset the conditions
         # Pop the parameter list from the call stack
@@ -91,6 +78,7 @@ class ObjectDefinition:
             self.result = self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
             self.result = self.__execute_return_statement(statement)
+            # Use this to block executing of any sibling methods
             self.terminated = True
         elif self.is_a_begin_statement(statement):
             self.result = self.__execute_all_sub_statements_of_begin_statement(
@@ -142,7 +130,6 @@ class ObjectDefinition:
         return name in self.fields
 
     def get_variable_with_name(self, name: str) -> None | int | str | bool:
-        # TO-DO: Fix this for method definition
         # 1. Check parameter level scope for method
         if name in self.parameters:
             return self.parameters[name]
@@ -204,42 +191,39 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             return self.__parse_str_into_python_value(expression)
 
-        # Case 4: Reached a call statement
+        # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
             val = self.__run_statement(expression)
             return val
         
-        # Case 5: Reached a new statement
+        # Case 4: Reached a new statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.NEW_DEF:
             # Get the name of the field
             field_name = expression[1]
 
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
-
-
             val = class_def.instantiate_object()
 
-            # Add this to our fields / parameters
             return val
                 
-
-        # Case 6: Reached a triple -- we need to recurse and evaluaute this binary expression       
+        # Case 5: Reached a triple -- we need to recurse and evaluaute this binary expression       
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
             operand1 = self.evaluate_expression(operand1)
             operand2 = self.evaluate_expression(operand2)
 
-            # Case 1: Operands must be of the same type
+            # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
             if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
             
-            # Case 2: Operands must be compatible with operator
+            # Case 5b: Operands must be compatible with operator
             if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
+            # Case 5c: Both are compatible and of same type, so evaluate them
             match operator:
                 case '+':
                     return operand1 + operand2
@@ -268,7 +252,7 @@ class ObjectDefinition:
                 case '|':
                     return operand1 or operand2
 
-        # Case 4: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
+        # Case 6: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
             operator, operand = expression
             operand = self.evaluate_expression(operand)
@@ -279,7 +263,7 @@ class ObjectDefinition:
             if operator == '!':
                 return not operand
 
-        # Case 5: Error - invalid expression format
+        # Case 7: Error - invalid expression format
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
@@ -304,28 +288,12 @@ class ObjectDefinition:
             return False  # Operand and operator are not compatible
 
     def __execute_print_statement(self, statement):
-        # Two cases to handle:
-        # 1. Value - we can format and print this directly
-        # 2. Variable - we must do a lookup for the variable name
-        # 3. Expression - we must do a calculation for this value
 
-        # TO-DO: Refactor
-        # TO-DO: Handle function calls
         formatted_arguments = []
         for arg in statement[1:]:
-            if isinstance(arg, list):
-                val = self.evaluate_expression(arg)
-                formatted_val = self.__convert_python_value_to_str(val)
-                formatted_arguments.append(formatted_val)
-            elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
-                formatted_arguments.append(arg[1:-1])
-            elif isinstance(arg, str) and arg.lower() in [InterpreterBase.TRUE_DEF, InterpreterBase.FALSE_DEF, InterpreterBase.NULL_DEF] or arg.isnumeric():
-                formatted_arguments.append(str(arg))
-            else:
-                variable_name = arg
-                value = self.get_variable_with_name(variable_name)
-                formatted_value = self.__convert_python_value_to_str(value)
-                formatted_arguments.append(formatted_value)
+            val = self.evaluate_expression(arg)
+            formatted_val = self.__convert_python_value_to_str(val)
+            formatted_arguments.append(formatted_val)
 
         if debug >= 1:
             print(formatted_arguments)
@@ -340,9 +308,7 @@ class ObjectDefinition:
         if not self.has_variable_with_name(field_name):
             self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-        # Handle case in which we need to instantiate a new object
-        # Otherwise, treat everything as expressions
-        # else:
+        # Evaluate expressions befoer setting value
         val = self.evaluate_expression(expression)
         self.update_variable_with_name(field_name, val)
         return
@@ -440,15 +406,11 @@ class ObjectDefinition:
         val = self.evaluate_expression(statement[1])
         self.final_result = val
 
-        # 2. Set a terminated flag to block any further execution of sibling statements
-        self.terminated = True
         return val
 
     def __execute_all_sub_statements_of_begin_statement(self, statement):
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
-        pass
-
 
 class ClassDefinition:
     # constructor for a ClassDefinition
@@ -461,16 +423,9 @@ class ClassDefinition:
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, copy.deepcopy(
-            self.methods), copy.deepcopy(self.fields))
-
-        # To-DO: Evaluate if this is a better approach below
-        # for method_name, method_def in self.methods.items():
-        #     obj.add_method(method_name, method_def)
-        # for field_name, field_value in self.fields.items():
-        #     obj.add_field(field_name, field_value)
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, 
+                               copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
-
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -577,8 +532,7 @@ class Interpreter(InterpreterBase):
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
     from testing import get_test_programs, fn
-    # file_name = './examples/example1.txt'
-    # program = [line.strip() for line in open(file_name)]
+
     RED = '\033[31m'
     GREEN = '\033[32m'
     YELLOW = '\033[33m'
