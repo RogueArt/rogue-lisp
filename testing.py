@@ -131,13 +131,21 @@ def get_test_programs():
             '(print "(& true true) " (& true true))      # true',
             '(print "(& true false) " (& true false))     # false',
             '(print "(| false false) " (| false false))    # false',
-            '(print "(| (& true false) (! false))) " (| (& true false) (! false)))    # false',
-            '(print (| true false))     # true',
-            '(print (! true))           # false',
-            '(print (! false))          # true',
-            '(print (== true true))     # true',
-            '(print (== true false))    # false',
-            '(print (!= false true))    # true',
+
+            # Do NOT allow null and boolean to be made into a comparison
+            # '(print "(| null false) " (| null false))    # error',
+            # Do NOT allow unary comparison with null / None
+            # '(print "(! null) " (! null))    # error',
+
+            # Nested case
+            '(print "(| (& true false) (! some_object))) " (| (& true false) (! false)))    # false',
+            '(print "(| true false)) " (| true false))     # true',
+            '(print "(! true)) " (! true))           # false',
+            '(print "(! false)) "(! false))          # true',
+            '(print "(== true true)) " (== true true))     # true',
+            '(print "(== true false)) " (== true false))    # false',
+            '(print "(!= false true)) " (!= false true))    # true',
+            '(print (! (! false)))',
         ')',
         ')',
         ')'
@@ -279,21 +287,26 @@ def get_test_programs():
     ]
 
     # While statement - True case - looping count down
-    while_statement_counting_down = [
+    while_statement_return = [
         '(class main',
-        '(field x 5)',
+        '(method foo (q)',
+        '(while (> q 0)',
+        '(begin'
+        '(if (== (% q 3) 0)',
+        '(return)  # immediately terminates loop and function foo',
+        '(set q (- q 1))',
+        ')',
+        '(print "Comparison value is: " (% q 3))',
+        ')',
+        ')',
+        ')',
         '(method main ()',
-        '(begin',
-        '(while (> x 0)',
-        '(begin',
-        '(print "x is " x)',
-        '(set x (- x 1))',
-        ')',
-        ')',
-        ')',
+        '(print (call me foo 5))',
         ')',
         ')'
-    ]
+        ]
+
+    # Nested while s tatement - True case - looping count down
 
     # Test that int and str can successfully receive inputs
     input_int_test = [
@@ -374,12 +387,86 @@ def get_test_programs():
     # Woof!
     # Dog speaks: (expect None) - None
 
+    # Check that we can instantiate a new object and call its methods
+    test_set_instantiation = [
+        '(class main',
+        '(field other null)',
+        '(method main ()',
+        '(begin',
+        '(set other (new other_class))',  # HERE
+        '(call other foo 5 6))))',
+
+        '(class other_class',
+        '(field a 10)',
+        '(method foo (q r) (print (+ a (+ q r)))))',
+    ]
+
+    # Test inline instantation
+    test_inline_instantiation = [
+        '(class main',
+        '(method main ()',
+        '(call (new other_class) foo 5 6)',
+        ')',
+        ')',
+        '(class other_class',
+        '(field a 10)',
+        '(method foo (q r) (print (+ a (+ q r))))',
+        ')'
+    ]
+
+    # Test return instantiation - return will return a new object of puppy
+    test_return_instantiation = [
+        '(class main',
+        '(field puppy_ref null)',
+        '(method main ()',
+        '(begin',
+        '(print "Adopting a puppy!")',
+        '(set puppy_ref (call me adopt_puppy))',
+        '(print (call puppy_ref say_thanks))',
+        ')',
+        ')',
+        '(method adopt_puppy()',
+        '(return (new puppy))',
+        ')',
+        ')',
+        '(class puppy',
+        '(method say_thanks ()',
+        '(return "Thank you for adopting me!")',
+        ')',
+        ')'
+    ]
+
+    # Test null return instantiation - return statemenet is empty
+    # Should catch and handle this error
+    test_null_return_instantiation = [
+        '(class main',
+        '(field puppy_ref null)',
+        '(method main ()',
+        '(begin',
+        '(print "Adopting two puppies...")',
+        '(set puppy_ref (call me adopt_puppy))',
+        '(print "No puppies to adopt!")',
+        ')',
+        ')',
+        '(method adopt_puppy()',
+        '(return) # Note: this is null',
+        ')',
+        ')',
+        '(class puppy',
+        '(method say_thanks ()',
+        '(return "Thank you for adopting me!")',
+        ')',
+        ')'
+    ]
 
     return {'simple': simple, 'many_fields': many_fields, 'simple_begin_test': simple_begin_test, 'nested_begin_test': nested_begin_test, 'set_fields': set_fields,
             'basic_other_call_test': basic_other_call_test, 'basic_self_call_test': basic_self_call_test, 'parameter_other_call_test': parameter_other_call_test,
             'integer_comparison': integer_comparison, 'boolean_comparison': boolean_comparison, 'string_comparison': string_comparison, 'null_comparison': null_comparison,
              'parameter_scoping_test': parameter_scoping_test, 'if_statement': if_statement, 'if_else_statement': if_else_statement, 'while_statement_false': while_statement_false,
-             'while_statement_counting_down': while_statement_counting_down, 'input_int_test': input_int_test, 'input_str_test': input_str_test, 'non_control_flow_return': non_control_flow_return}
+             'while_statement_return': while_statement_return, 'non_control_flow_return': non_control_flow_return,'test_set_instantiation': test_set_instantiation,
+             'test_inline_instantiation': test_inline_instantiation, 'test_return_instantiation': test_return_instantiation, 'test_null_return_instantiation': test_null_return_instantiation
+            #'input_int_test': input_int_test, 'input_str_test': input_str_test, }
+            }
 
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
