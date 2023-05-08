@@ -291,19 +291,9 @@ class ObjectDefinition:
 
         formatted_arguments = []
         for arg in statement[1:]:
-            if isinstance(arg, list):
-                val = self.evaluate_expression(arg)
-                formatted_val = self.__convert_python_value_to_str(val)
-                formatted_arguments.append(formatted_val)
-            elif isinstance(arg, str) and arg.startswith('"') and arg.endswith('"'):
-                formatted_arguments.append(arg[1:-1])
-            elif isinstance(arg, str) and arg.lower() in [InterpreterBase.TRUE_DEF, InterpreterBase.FALSE_DEF, InterpreterBase.NULL_DEF] or arg.isnumeric():
-                formatted_arguments.append(str(arg))
-            else:
-                variable_name = arg
-                value = self.get_variable_with_name(variable_name)
-                formatted_value = self.__convert_python_value_to_str(value)
-                formatted_arguments.append(formatted_value)
+            val = self.evaluate_expression(arg)
+            formatted_val = self.__convert_python_value_to_str(val)
+            formatted_arguments.append(formatted_val)
 
         if debug >= 1:
             print(formatted_arguments)
