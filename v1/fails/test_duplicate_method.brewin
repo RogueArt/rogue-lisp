@@ -1,0 +1,7 @@
+(class main
+  (method main ()
+    (print "hello")
+  )
+  (method x () (print "hello"))
+  (method x () (print "hello"))
+)

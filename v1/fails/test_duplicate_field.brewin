@@ -1,0 +1,7 @@
+(class main
+  (method main ()
+    (print "hello")
+  )
+  (field x 10)
+  (field x 100)
+)

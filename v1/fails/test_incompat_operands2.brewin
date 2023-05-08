@@ -1,0 +1,8 @@
+(class main
+ (field mydog null)
+ (method main ()
+   (begin
+     (print (+ true true))
+   )
+ )
+)
