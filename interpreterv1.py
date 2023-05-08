@@ -40,7 +40,7 @@ class ObjectDefinition:
 
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
-        result = self.__run_statement(statement)
+        self.__run_statement(statement)
 
         # Reset the conditions
         # Pop the parameter list from the call stack
@@ -78,6 +78,8 @@ class ObjectDefinition:
             self.result = self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
             self.result = self.__execute_return_statement(statement)
+            
+            # Use this to block executing of any sibling methods
             self.terminated = True
         elif self.is_a_begin_statement(statement):
             self.result = self.__execute_all_sub_statements_of_begin_statement(
@@ -423,8 +425,6 @@ class ObjectDefinition:
         val = self.evaluate_expression(statement[1])
         self.final_result = val
 
-        # 2. Set a terminated flag to block any further execution of sibling statements
-        self.terminated = True
         return val
 
     def __execute_all_sub_statements_of_begin_statement(self, statement):
