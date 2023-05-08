@@ -365,13 +365,19 @@ class ObjectDefinition:
 
         # Get object based on if it's the current or some other object
         obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name)
+
+        # Call made to object reference of null must generate an error
         if obj is None:
-            raise ErrorType('Could not find object')
+            self.interpreter_base.error(ErrorType.FAULT_ERROR)
 
         # Parameters to the method are any variable, constant, or expression
         # We evaluate each expression and create a map of parameter names to values
         parameter_map = {}
         method = obj.get_method_with_name(method_name)
+
+        # Call made to a method name that does not exist must generate an error
+        if method is None:
+            self.interpreter_base.error(ErrorType.FAULT_ERROR)
 
         # Number of parameters does not match the method definition
         if len(param_expressions) != len(method.parameter_names):
