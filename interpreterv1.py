@@ -216,6 +216,11 @@ class ObjectDefinition:
 
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
+
+            # If class definition is unknown, throw an error
+            if class_def is None:
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
             val = class_def.instantiate_object()
 
             # Add this to our fields / parameters
