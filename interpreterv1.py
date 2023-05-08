@@ -339,6 +339,10 @@ class ObjectDefinition:
         # Get the simplified result of the expression:
         field_name, expression = statement[1], statement[2]
 
+        # Throw error if the variable we're setting does not exist
+        if not self.has_variable_with_name(field_name):
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
+
         # Handle case in which we need to instantiate a new object
         # Otherwise, treat everything as expressions
         # else:
