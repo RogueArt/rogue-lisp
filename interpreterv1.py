@@ -441,9 +441,9 @@ class Interpreter(InterpreterBase):
 
         # TO-DO: Add parsing for classes
         self.__discover_all_classes_and_track_them(parsed_program)
-        class_def = self.find_definition_for_class("main")
+        class_def = self.find_definition_for_class(InterpreterBase.MAIN_CLASS_DEF)
         obj = class_def.instantiate_object()
-        obj.call_method("main", {})
+        obj.call_method(InterpreterBase.MAIN_FUNC_DEF, {})
 
     def __discover_all_classes_and_track_them(self, parsed_program):
         # Add classes to the list
