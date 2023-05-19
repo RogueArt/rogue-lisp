@@ -193,8 +193,7 @@ class ObjectDefinition:
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
-            val = self.__run_statement(expression)
-            return val
+            return self.__execute_call_statement(expression)
         
         # Case 4: Reached a new statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.NEW_DEF:
