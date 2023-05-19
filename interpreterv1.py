@@ -56,38 +56,34 @@ class ObjectDefinition:
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
-    def __run_statement(self, statement: List[any]):
+    def __run_statement(self, statement: List[any]) -> None:
         if debug >= 1:
             print(statement)
 
         if self.terminated:
-            return self.result
+            return
         
-        # TO-DO: This does literally nothing for the final result
-        # Clean this up
-        self.result = None
         if self.is_a_print_statement(statement):
-            self.result = self.__execute_print_statement(statement)
+            self.__execute_print_statement(statement)
         elif self.is_a_set_statement(statement):
-            self.result = self.__execute_set_statement(statement)
+            self.__execute_set_statement(statement)
         elif self.is_an_input_statement(statement):
-            self.result = self.__execute_input_statement(statement)
+            self.__execute_input_statement(statement)
         elif self.is_a_call_statement(statement):
-            self.result = self.__execute_call_statement(statement)
+            self.__execute_call_statement(statement)
         elif self.is_a_while_statement(statement):
-            self.result = self.__execute_while_statement(statement)
+            self.__execute_while_statement(statement)
         elif self.is_an_if_statement(statement):
-            self.result = self.__execute_if_statement(statement)
+            self.__execute_if_statement(statement)
         elif self.is_a_return_statement(statement):
-            self.result = self.__execute_return_statement(statement)
+            self.__execute_return_statement(statement)
             # Use this to block executing of any sibling methods
             self.terminated = True
         elif self.is_a_begin_statement(statement):
-            self.result = self.__execute_all_sub_statements_of_begin_statement(
+            self.__execute_all_sub_statements_of_begin_statement(
                 statement)
         
-        # Default return is None if no other statements updated it
-        return self.result
+        return
 
     # <========== MATCH STATEMENT ============>
     def is_a_print_statement(self, statement):
@@ -288,7 +284,7 @@ class ObjectDefinition:
         else:
             return False  # Operand and operator are not compatible
 
-    def __execute_print_statement(self, statement):
+    def __execute_print_statement(self, statement) -> None:
 
         formatted_arguments = []
         for arg in statement[1:]:
@@ -365,9 +361,7 @@ class ObjectDefinition:
         self.result = obj.call_method(method_name, parameter_map)
         return self.result
 
-    def __execute_while_statement(self, statement) -> None|int|str|bool:
-        result = None
-
+    def __execute_while_statement(self, statement) -> None:
         should_execute = self.evaluate_expression(statement[1])
 
         # Should always evaluate to a boolean condition
@@ -378,7 +372,7 @@ class ObjectDefinition:
             self.__run_statement(statement[2])
             self.__execute_while_statement(statement)
         
-        return result
+        return
 
     def __execute_if_statement(self, statement) -> None|int|str|bool:        
         should_execute = self.evaluate_expression(statement[1])
@@ -394,22 +388,19 @@ class ObjectDefinition:
         elif not should_execute and len(statement) == 4:
             return self.__run_statement(statement[3])
 
-        return None
+        return
     
-    def __execute_return_statement(self, statement) -> None|int|str|bool:
+    def __execute_return_statement(self, statement) -> None:
         # Get the final return value
         if len(statement) == 1:
             self.final_result = None
             return None
         
-        # We do two things here
-        # 1. Any expression evaluated in return statement is the "final" value of method call
-        val = self.evaluate_expression(statement[1])
-        self.final_result = val
+        # Any expression evaluated in return statement is the "final" value of method call
+        self.final_result = self.evaluate_expression(statement[1])
+        return 
 
-        return val
-
-    def __execute_all_sub_statements_of_begin_statement(self, statement):
+    def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
 
