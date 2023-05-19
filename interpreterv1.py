@@ -27,8 +27,8 @@ class ObjectDefinition:
         self.terminated = False
         self.final_result = None
 
-        self.parameter_stack: List[Dict[str, None|int|bool|str]] = []
-        self.parameters: Dict[str, None|int|bool|str] = {}
+        self.parameter_stack: List[Dict[str, None|int|bool|str]] = [{}]
+        self.parameters: Dict[str, None|int|bool|str] = self.parameter_stack[-1]
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
@@ -37,6 +37,7 @@ class ObjectDefinition:
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
         self.terminated = False
+        self.final_result = None
 
         method = self.get_method_with_name(method_name)
         statement = method.get_top_level_statement()
@@ -45,12 +46,13 @@ class ObjectDefinition:
         # Reset the conditions
         # Pop the parameter list from the call stack
         self.parameter_stack.pop()
-        self.parameters = self.parameter_stack[-1] if len(self.parameter_stack) > 0 else {}
+        self.parameters = self.parameter_stack[-1]
+
+        # We need this because of how the recursion works
+        # Imagine if we do call1 -> call2 -> call 3
+        # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
-        
-        saved_result = self.final_result
-        self.final_result = None
-        return saved_result
+        return self.final_result
 
     # runs/interprets the passed-in statement until completion and
     # gets the result, if any
