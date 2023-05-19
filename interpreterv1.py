@@ -4,8 +4,6 @@ from bparser import BParser
 from pprint import pprint
 import copy
 
-NestedList = Union[str, List['NestedList']]
-
 # For debug levels
 debug = 0
 class MethodDefinition:
