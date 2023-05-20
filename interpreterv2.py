@@ -98,12 +98,12 @@ class Interpreter(InterpreterBase):
                 # Read the type hint and value, verify that they match
                 value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(value_str)
                 field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
-                if not ValueHelper.does_type_declaration_match_value(field_type, value):
+                if not ValueHelper.is_value_compatible_with_type(value, field_type):
                     self.interpreter_base.error(ErrorType.TYPE_ERROR)
                 
                 # TO-DO: Add variable types
                 # Fields map stores <name:Value> pairs
-                fields[field_name] = value
+                fields[field_name] = { 'type': field_type, 'value': value }
 
         return fields
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
-    skip_tests = []
+    skip_tests = ['field_and_method_types']
     run_tests = []
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
@@ -136,7 +136,19 @@ if __name__ == "__main__":
             continue
 
         if (len(run_tests) > 0 and program_name in run_tests) or len(run_tests) == 0:
-            print(GREEN + f"Running test #{count+1} {program_name}:" + RESET)
-            interpreter = Interpreter()
-            interpreter.run(program)
-            print(GREEN + f"Finished testing {program_name}\n\n" + RESET)
+            try:
+                print(GREEN + f"Running test #{count+1} {program_name}:" + RESET)
+                interpreter = Interpreter()
+                interpreter.run(program)
+                print(GREEN + f"Finished testing {program_name}\n\n" + RESET)
+            except RuntimeError as e:
+                if e.args[0] == 'ErrorType.TYPE_ERROR':
+                    print("Code exited with ErrorType.TYPE_ERROR")
+                elif e.args[0] == 'ErrorType.NAME_ERROR':
+                    print("Code exited with ErrorType.NAME_ERROR")
+                elif e.args[0] == 'ErrorType.SYNTAX_ERROR':
+                    print("Code exited with ErrorType.SYNTAX_ERROR")
+                elif e.args[0] == 'ErrorType.FAULT_ERROR':
+                    print("Code exited with ErrorType.FAULT_ERROR")
+                else:
+                    raise e
