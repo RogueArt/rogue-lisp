@@ -7,10 +7,12 @@ import copy
 # For debug levels
 debug = 0
 class MethodDefinition:
-    def __init__(self, method_name: str, top_level_statement: list, parameter_names: List[str]):
-        self.method_name = method_name
-        self.top_level_statement = top_level_statement
-        self.parameter_names = parameter_names
+    def __init__(self, return_type: type, method_name: str, top_level_statement: list, parameter_names: List[str], parameter_types: List[type]):
+        self.return_type: type = return_type
+        self.method_name: str = method_name
+        self.top_level_statement: list = top_level_statement
+        self.parameter_names: List[str] = parameter_names
+        self.parameter_types: List[type] = parameter_types # Types of each of the args
 
     # Top-level statement list in the form of nested lists
     def get_top_level_statement(self):
@@ -166,7 +168,9 @@ class ObjectDefinition:
             return InterpreterBase.TRUE_DEF
         elif value is False:
             return InterpreterBase.FALSE_DEF
-        elif value is None:
+        # Nothing type OR optional class type
+        # Note: we aren't REQUIRED to handle it, but do it for debugging purposes
+        elif value is None or isinstance(value, tuple):
             return InterpreterBase.NULL_DEF
         elif isinstance(value, str):
             return value # '"' + value + '"'
@@ -460,30 +464,48 @@ class Interpreter(InterpreterBase):
             # Create a new class with given methods and fields
             self.class_definitions[class_name] = ClassDefinition(
                 self, self.interpreter_base, class_name, methods, fields)
+    
+    # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
+    def __parse_expected_types_from_parameters_list(self, params_list: List[List[str]]) -> List[type]:
+        return [self.convert_type_str_to_python_type(param_type) for param_type, _ in params_list]
+
+    def __parse_parameter_names_from_parameters_list(self, params_list: List[List[str]]) -> List[str]:
+        return [param[1] for param in params_list]
 
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
         for statement in class_def[2:]:
             if statement[0] == Interpreter.METHOD_DEF:
                 # Each method is in this format:
-                # ['method', <name>, [<parameters>], [<statements>]]
-                method_name: str = statement[1]
-                parameters_list: List[str] = statement[2]
-                top_level_statement = statement[3]
+                # ['method', <return type>, <name>, [<parameters>], [<statements>]]
+                return_type_str: str = statement[1]
+                method_name: str = statement[2]
+                parameters_list: List[str] = statement[3]
+                top_level_statement = statement[4] # TO-DO: Can we have method with no top level statement?
                 
+                # TO-DO: See if we want to make this into a dictionary of name and type?
+                return_type = self.convert_return_type_str_to_python_type(return_type_str)
+                parameter_names = self.__parse_parameter_names_from_parameters_list(parameters_list)
+                parameter_types = self.__parse_expected_types_from_parameters_list(parameters_list)
+
                 # Duplicate method names are not allowed
                 if method_name in methods:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
                 # Methods map stores <name:MethodDefinition> pairs
-                methods[method_name] = MethodDefinition(
-                    method_name, top_level_statement, parameters_list)
+                methods[method_name] = MethodDefinition(return_type, method_name, top_level_statement, parameter_names, parameter_types)
         return methods
 
+    # Return types support one extra type: void
+    def convert_return_type_str_to_python_type(self, brewin_type: str):
+        if brewin_type == "void":
+            return None
+        else:
+            return self.convert_type_str_to_python_type(brewin_type)
 
     # TO-DO: Pick a better variable name
     # TO-DO: Update function signature type
-    def convert_type(self, brewin_type_str: str):
+    def convert_type_str_to_python_type(self, brewin_type_str: str, is_method=False):
         if brewin_type_str == "int":
             return int
         elif brewin_type_str == "string":
@@ -522,7 +544,7 @@ class Interpreter(InterpreterBase):
                 value: List[str] = self.__parse_str_into_python_value(statement[3])
                 
                 # Static type checking - check if field type compatible with value type
-                field_type = self.convert_type(field_type_str)
+                field_type = self.convert_type_str_to_python_type(field_type_str)
                 if not self.is_type_compatible_with_value(field_type, value):
                     raise ValueError('error') # TO-DO: Make this into appropriate error
 
