@@ -234,6 +234,128 @@ def get_test_programs():
   ')'
 ]
 
+    # Simple valid case - one level variable case
+    valid_local_variables_with_let = [
+  '(class main',
+  '(method void foo ()',
+  '(begin',
+  '(let ((int y 5))',
+  '(print y)\t\t# this prints out 5',
+  ')',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo)',
+  ')',
+  ')'
+]
+    
+    # Invalid case - trying to access local variable outside of where it's declared
+    invalid_local_variable_access_with_let = [
+  '(class main',
+  '(method void foo ()',
+  '(begin',
+  '(let ((int y 5))',
+  '(print y)\t\t# this prints out 5',
+  ')',
+  '(print y)',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo)',
+  ')',
+  ')'
+]
+    let_with_shadowing_test = [
+  '(class main',
+  '(method void foo ((int x))',
+  '(begin',
+  '(print x)  \t\t\t\t\t# Line #1: prints 10',
+  '(let ((bool x true) (int y 5))',
+  '(print x)\t\t\t\t\t# Line #2: prints true',
+  '(print y)\t\t\t\t\t# Line #3: prints 5',
+  ')',
+  '(print x)\t\t\t\t\t# Line #4: prints 10',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo 10)',
+  ')',
+  ')'
+]
+    
+    let_with_nested_shadowing_test = [
+  '(class main',
+  '(method void foo ((int x))',
+  '(begin',
+  '(print x)  \t\t\t\t\t# Line #1: prints 10',
+  '(let ((bool x true) (int y 5))',
+  '(let ((bool x false) (int y 100))',
+  '(print x)\t\t\t\t\t# Line #2: prints false',
+  '(print y)\t\t\t\t\t# Line #3: prints 100',
+  ')',
+  ')',
+  '(print x)\t\t\t\t\t# Line #4: prints 10',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo 10)',
+  ')',
+  ')'
+    ]
+
+    let_with_nested_shadowing_test_multiple_class = [
+  '(class person',
+  '(method void foo ((int x))',
+  '(begin',
+  '(print x)  \t\t\t\t\t# Line #1: prints 10',
+  '(let ((bool x true) (int y 5))',
+  '(let ((string x "hello") (int y 100))',
+  '(print x)\t\t\t\t\t# Line #2: prints hello',
+  '(print y)\t\t\t\t\t# Line #3: prints 100',
+  ')',
+  '(print x)                    # Line #4: prints true',
+  ')',
+  '(print x)\t\t\t\t\t# Line #5: prints 10',
+  ')',
+  ')',
+  ')',
+  '(class main',
+  '(field person p null)',
+  '(method void main ()',
+  '(begin',
+  '(set p (new person))',
+  '(call p foo 10)',
+  ')',
+  ')',
+  ')'
+]
+    
+    let_with_nothing = [
+  '(class person',
+  '(method void foo ((int x))',
+  '(begin',
+  '(print x)  \t\t\t\t\t# Line #1: prints 10',
+  '(let ()',
+  '(print "hello")',
+  ')',
+  '(print x)\t\t\t\t\t# Line #5: prints 10',
+  ')',
+  ')',
+  ')',
+  '(class main',
+  '(field person p null)',
+  '(method void main ()',
+  '(begin',
+  '(set p (new person))',
+  '(call p foo 10)',
+  ')',
+  ')',
+  ')'
+]
+    
+    
+
     return {
         "field_and_method_types": field_and_method_types,
         "set_valid_field_types": set_valid_field_types,
@@ -246,6 +368,13 @@ def get_test_programs():
         "call_with_valid_argument_types": call_with_valid_argument_types,
         "call_with_invalid_argument_types": call_with_invalid_argument_types,
         "call_with_valid_default_types": call_with_valid_default_types,
+
+        "valid_local_variables_with_let": valid_local_variables_with_let,
+        'invalid_local_variable_access_with_let': invalid_local_variable_access_with_let,
+        'let_with_shadowing_test': let_with_shadowing_test,
+        'let_with_nested_shadowing_test': let_with_nested_shadowing_test,
+        'let_with_nested_shadowing_test_multiple_class': let_with_nested_shadowing_test_multiple_class,
+        'let_with_nothing': let_with_nothing
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
