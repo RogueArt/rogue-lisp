@@ -50,6 +50,11 @@ class Interpreter(InterpreterBase):
             self.class_definitions[class_name] = ClassDefinition(
                 self, self.interpreter_base, class_name, [], [])
 
+        # Two-pass method: we now pick up all class definitions beforehand
+        for class_def in parsed_program:
+            # Get class name
+            class_name = class_def[1]
+
             # Parse the methods and fields from the object
             methods = self.__get_methods_for_class(class_def)
             self.class_definitions[class_name].set_methods(methods)
@@ -96,7 +101,12 @@ class Interpreter(InterpreterBase):
                 # Read the type hint and value, verify that they match
                 value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(self, value_str)
                 field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
-                if not ValueHelper.is_value_compatible_with_type(value, field_type):
+                
+                # We must compare the variable with the value we just parsed
+                # Any arbitrary value for the variable
+                field_variable = { 'type': field_type, 'value': None }
+                field_value = { 'type': ValueHelper.get_type_from_value(value), 'value': value }
+                if not ValueHelper.is_value_compatible_with_variable(field_value, field_variable):
                     self.interpreter_base.error(ErrorType.TYPE_ERROR)
                 
                 # TO-DO: Add variable types
@@ -126,7 +136,9 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     skip_tests = []  # , 'set_fields'
     # skip_tests = ['field_and_method_types']
+    # run_tests = ['call_with_valid_default_types']
     run_tests = []
+    # run_tests = ['call_with_valid_argument_types']
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
