@@ -69,7 +69,7 @@ class Interpreter(InterpreterBase):
                 top_level_statement = statement[4]
                 
                 return_type = ValueHelper.get_return_type_from_type_str(self, return_type_str)
-                parameter_names = ValueHelper.parse_parameter_names_from_parameters_list(parameters_list)
+                parameter_names = ValueHelper.parse_parameter_names_from_parameters_list(self, parameters_list)
                 parameter_types = ValueHelper.parse_expected_types_from_parameters_list(self, parameters_list)
 
                 # Duplicate method names are not allowed

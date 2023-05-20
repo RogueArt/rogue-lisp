@@ -488,8 +488,21 @@ class ValueHelper():
     def parse_expected_types_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[type]:
         return [ValueHelper.get_variable_type_from_type_str(interpreter, param_type) for param_type, _ in params_list]
 
-    def parse_parameter_names_from_parameters_list(params_list: List[List[str]]) -> List[str]:
-        return [param[1] for param in params_list]
+    def parse_parameter_names_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[str]:
+        parameter_names = []
+        duplicate_names = set()
+
+        for param in params_list:
+            name = param[1]
+            if name in parameter_names:
+                duplicate_names.add(name)
+            else:
+                parameter_names.append(name)
+
+        if duplicate_names:
+            raise interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
+
+        return parameter_names
 
     # TO-DO: Use a better variable naming scheme
     def parse_let_declarations(interpreter, params_list: List[List[str]]) -> Dict[str, str]:
