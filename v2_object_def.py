@@ -389,8 +389,14 @@ class ObjectDefinition:
             self.__run_statement(sub_statement)
 
     def __execute_let_statement(self, statement) -> None:
-        # Initialize and add the local variables
+        # Get local parameters added in this scope
+        # As we get more and more nested, we should be able to refer to the outer scopes as well
         parsed_local_variables = ValueHelper.parse_let_declarations(self.interpreter, statement[1])
+        for variable_name, variable_info in self.local_variables.items():
+            # Only add variables that can't be shadowed
+            if variable_name not in parsed_local_variables:
+                parsed_local_variables[variable_name] = variable_info
+
         self.local_variables_stack.append(parsed_local_variables)
         self.local_variables = self.local_variables_stack[-1]
 
