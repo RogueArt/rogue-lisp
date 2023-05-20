@@ -1,0 +1,10 @@
+(class main
+  (field int x 2)
+  (field string y "2")
+  (method void main ()
+    (begin
+      (print x)
+      (print y)
+    )
+  )
+)

@@ -1,0 +1,5 @@
+(class main
+  (field int x "foo")
+  (method void main ()
+  )
+)

@@ -1,0 +1,14 @@
+(class main
+  (method void main ()
+    (call me foo (new animal) (new dog))
+  )
+  (method void foo ((animal a) (dog d))
+    (set d a)
+  )
+)
+(class animal
+  (method void breathe () (return 1))
+)
+(class dog inherits animal
+  (method void breathe () (return 1))
+)

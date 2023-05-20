@@ -1,0 +1,12 @@
+# prints out true, then prints false
+(class main
+(method void main ()
+  (print (call me foo true))
+)
+  (method bool foo ((bool q)) 
+    (if q
+      (return)  # returns default value for bool which is false
+      (return true)
+    )
+  )
+  )

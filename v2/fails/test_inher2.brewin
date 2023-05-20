@@ -1,0 +1,23 @@
+(class main
+  (method int main ()
+    (begin
+      (call me foo (new student))
+      (call pf sayHi)
+    )
+  )
+  (field person pf null)
+  (method void foo ((student s))
+    (begin
+      (set pf s)
+    )
+  )
+)
+
+(class person
+  (method void main () (return null))
+)
+
+(class student
+ (method void main () (return null))
+ (method void sayHi () (print "study"))
+)

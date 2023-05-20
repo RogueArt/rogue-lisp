@@ -1,0 +1,10 @@
+(class main
+  (method student foo () (return (new person)))
+  (method void main () (print (call me foo)))
+)
+(class person
+  (method void main () (return 1))
+)
+(class student inherits person
+  (method void main () (return 1))
+)

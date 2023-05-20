@@ -1,0 +1,6 @@
+(class main
+  (method string baz ((string t)) (return t))
+  (method string bar ((string s)) (return (+ " " (+ (call me baz s) " "))))
+  (method string foo ((int q) (int r)) (print q (call me bar "and") r))
+  (method void main () (call me foo 5 6))
+)

@@ -1,0 +1,34 @@
+(class shape
+  (method void id ()
+    (print "shape")
+  )
+  (method void get_id ()
+    (call me id)
+  )
+)
+
+(class rectangle inherits shape
+  (method void id ()
+    (print "rectangle")
+  )
+  (method void get_super_id ()
+    (call super id)
+  )
+)
+
+(class square inherits rectangle
+  (method void id ()
+    (print "square")
+  )
+)
+
+(class main
+  (method void main ()
+    (begin
+      (call (new rectangle) get_id)
+      (call (new square) get_id)
+      (call (new rectangle) get_super_id)
+      (call (new square) get_super_id)
+    )
+  )
+)

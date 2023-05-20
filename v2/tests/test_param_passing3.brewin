@@ -1,0 +1,18 @@
+(class main
+  (field student s null)
+  (method void ask_person_to_talk ((person p))
+    (call p talk)
+  )
+  (method void main ()
+    (begin
+      (set s (new student))
+      (call me ask_person_to_talk s)
+    )
+  )
+)
+(class person
+  (method void main () ())
+)
+(class student inherits person
+  (method void talk () (print "speak"))
+)

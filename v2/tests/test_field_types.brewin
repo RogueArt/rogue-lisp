@@ -1,0 +1,15 @@
+(class person
+  (method void nothing ()
+    (return "")
+  )
+)
+
+(class main
+  (field int x 10)
+  (field string y "xyz")
+  (field person p null)
+
+  (method void main ()
+    (print x y)
+  )
+)

@@ -1,0 +1,11 @@
+(class main
+ (method void main ()
+  (call me test 1)
+ )
+ (method void test ((int x))
+  (begin
+   (inputs x)
+   (print x)
+  )
+ )
+)

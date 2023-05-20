@@ -1,0 +1,18 @@
+(class main
+  (method person foo ()
+    (begin
+      (print "yurty")
+      (return (new pupil))
+    )
+  )
+  (method void main () (call me foo))
+)
+(class person
+  (method void main () (return))
+)
+(class student inherits person
+  (method void main () (return))
+)
+(class pupil inherits student
+  (method void main () (return))
+)

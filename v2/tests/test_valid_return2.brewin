@@ -1,0 +1,12 @@
+(class main
+  (method person foo ()
+    (begin
+      (print "yurt")
+      (return (new person))
+    )
+  )
+  (method void main () (call me foo))
+)
+(class person
+  (method void main () (return))
+)

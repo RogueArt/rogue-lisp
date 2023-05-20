@@ -1,0 +1,5 @@
+(class first
+  (method void main ()
+    (print "hello")
+  )
+)

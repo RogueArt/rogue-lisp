@@ -1,0 +1,16 @@
+(class main
+  (method void main ()
+    (call me foo (new person) (new student))
+  )
+  (method void foo ((person p) (student s))
+    (if (== p s)
+      (return)
+    )
+  )
+)
+(class person
+  (method void main () (return null))
+)
+(class student
+  (method void main () (return null))
+)

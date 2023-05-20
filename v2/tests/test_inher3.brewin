@@ -1,0 +1,32 @@
+(class person
+  (field string name "person")
+  (method void set_name ((string n)) (set name n))
+  (method void say_something () (print name " says hi"))
+)
+
+(class student inherits person
+  (field string name "student")
+  (method void main () (return))
+)
+
+(class pupil inherits student
+  (field string name "pupil")
+  (method void say_something ()
+    (begin
+     (print "first")
+     (call super say_something)
+     (print "second")
+    )
+  )
+)
+
+(class main
+  (field pupil p null)
+  (method void main ()
+    (begin
+      (set p (new pupil))
+      (call p say_something)
+    )
+  )
+)
+

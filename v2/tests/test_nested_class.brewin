@@ -1,0 +1,8 @@
+(class main
+  (method int main ()
+    (print "valid")
+  )
+)
+(class Node
+  (field Node next null)
+)

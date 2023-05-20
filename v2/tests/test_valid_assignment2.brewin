@@ -1,0 +1,26 @@
+(class main
+  (method void main ()
+    (call me foo (new animal) (new dog) (new pup))
+  )
+  (field animal a1 null)
+  (field dog d1 null)
+  (field pup p1 null)
+
+  (method void foo ((animal a2) (dog d2) (pup p2))
+    (begin
+      (set a1 p2)
+      (set d1 null)
+      (set p1 p2)
+      (print 123)
+    )
+  )
+)
+(class animal
+  (method void main () (return))
+)
+(class dog inherits animal
+  (method void main () (return))
+)
+(class pup inherits dog
+  (method void main () (return))
+)

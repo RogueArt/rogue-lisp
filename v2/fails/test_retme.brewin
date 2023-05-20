@@ -1,0 +1,17 @@
+(class bar
+  (method void none ()
+    (return)
+  )
+)
+
+(class foo
+  (method bar retme ()
+    (return me)
+  )
+)
+
+(class main
+  (method void main ()
+    (print (call (new foo) retme))
+  )
+)

@@ -1,0 +1,4 @@
+(class main
+  (method string foo () (return))
+  (method void main () (print (call me foo)))
+)

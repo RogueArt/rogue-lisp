@@ -1,0 +1,20 @@
+(class Person
+    (field int id 0)
+)
+
+(class Student inherits Person
+    (field int id 100)
+)
+(class cyborgStudent inherits Student
+    (method void a () (print "cyborg nice!"))
+)
+(class main
+    (field Person p null)
+    (field Student s null)
+    (method Person returnStudent () (return null))
+    (method void main ()
+        (begin
+            (set s (call me returnStudent))
+        )
+    )
+)

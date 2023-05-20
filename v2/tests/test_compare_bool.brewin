@@ -1,0 +1,6 @@
+(class main
+  (field bool x true)
+  (method void main ()
+    (if (!= false x) (print 1))
+  )
+)

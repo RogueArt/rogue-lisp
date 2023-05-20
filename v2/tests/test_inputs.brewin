@@ -1,0 +1,13 @@
+(class main
+ (field string x "hi")
+ (method void main ()
+  (call me test "hi")
+ )
+ (method void test ((string y))
+  (begin
+   (inputs y)
+   (print x)
+   (print y)
+  )
+ )
+)

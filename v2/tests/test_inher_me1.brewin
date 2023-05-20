@@ -1,0 +1,49 @@
+(class person
+  (field string name "anonymous")
+  (field string test_field "test_field inside person")
+  (method void test_me_1 ()
+    (print "test_me_1 inside parent")
+  )
+  (method void test_super_1 () 
+    (begin
+      (print "inside test_super_1")
+      (print test_field)
+      (call me test_me_1)
+    )
+  )
+  (method void test_super_2 () 
+    (begin
+      (print "inside test_super_2")
+      (print test_field)
+      (call me test_me_1)
+    )
+  )
+)
+
+(class student inherits person
+  (field int student_id 0)
+  (field string test_field "test_field inside student")
+  
+  (method void test_method ()
+    (begin
+      (call super test_super_1)
+      (call me test_super_2)
+    )
+  )
+  (method void test_me_1 ()
+    (print "test_me_1 inside student")
+  )
+  (method void test_me_2 ()
+    (print "test_me_2 inside student")
+  )
+)
+
+(class main
+  (field student s null)
+  (method void main ()
+    (begin
+      (set s (new student))
+      (call s test_method)
+    )
+  )
+)

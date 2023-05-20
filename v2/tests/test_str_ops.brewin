@@ -1,0 +1,10 @@
+(class main
+  (method void main ()
+  (begin
+    (print (+ "h" "i"))
+    (if (!= "a" "b")
+      (print (< "c" "d"))
+    )
+  )
+  )
+)

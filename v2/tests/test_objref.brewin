@@ -1,0 +1,20 @@
+(class foo
+  (method void bar ()
+    (print 10)
+  )
+)
+
+(class main
+  (field foo x null)
+  (field foo y null)
+  
+  (method void main ()
+    (begin
+      (print (== x y))
+      (set x (new foo))
+      (print (== x y))
+      (set y x)
+      (print (== x y))
+    )
+  )
+)

@@ -1,0 +1,5 @@
+(class main
+  (field int x 10)
+  (method void bar ((int x)) (print x))
+  (method void main () (call me bar 5))
+)

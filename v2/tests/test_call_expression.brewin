@@ -1,0 +1,11 @@
+(class main
+  (method void main ()
+    (call (new dog) bark "woof")
+  )
+)
+
+(class dog
+  (method void bark ((string x))
+    (print x)
+  )
+)

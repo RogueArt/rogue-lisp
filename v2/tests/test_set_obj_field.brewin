@@ -1,0 +1,13 @@
+(class main
+ (field dog x null)
+ (method void main ()
+  (begin
+   (set x (new dog))
+   (call x main)
+  )
+ )
+)
+
+(class dog
+  (method void main () (print "bark"))
+)

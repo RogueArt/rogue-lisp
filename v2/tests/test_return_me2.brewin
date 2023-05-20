@@ -1,0 +1,14 @@
+# written by Sirfist19
+(class person
+  (method void nothing () (print "ME ME ME"))
+  (method person return_me () (return me))
+)
+(class main
+  (field person x null)
+  (method void main ()
+    (begin
+      (set x (new person))
+      (call (call x return_me) nothing)
+    )
+  )
+)

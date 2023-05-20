@@ -1,0 +1,6 @@
+(class main
+  (method void main ()
+    (print (== 1 1))
+  )
+)
+

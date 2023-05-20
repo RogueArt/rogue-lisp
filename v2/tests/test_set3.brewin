@@ -1,0 +1,27 @@
+(class main
+  (method int main ()
+    (begin
+      (call me foo (new nerd))
+      (call pf sayHi)
+    )
+  )
+  (field person pf null)
+  (method void foo ((nerd s))
+    (begin
+      (set pf s)
+    )
+  )
+)
+
+(class person
+  (method void main () (return null))
+)
+
+(class student inherits person
+ (method void main () (return null))
+)
+
+(class nerd inherits student
+ (method void main () (return null))
+ (method void sayHi () (print "study"))
+)
