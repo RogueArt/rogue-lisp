@@ -1,4 +1,6 @@
-from typing import List, Dict
+from __future__ import annotations
+
+from typing import List, Dict, Union, Annotated
 from intbase import InterpreterBase, ErrorType
 
 from v2_method_def import *
@@ -7,9 +9,9 @@ from bparser import BParser
 from intbase import InterpreterBase
 from v2_object_def import *
 
+BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
+
 import copy
-
-
 class ObjectDefinition:
     def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None | int | bool | str]):
         self.interpreter = interpreter
