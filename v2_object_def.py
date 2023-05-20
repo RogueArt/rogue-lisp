@@ -448,6 +448,24 @@ class ValueHelper():
     def parse_parameter_names_from_parameters_list(params_list: List[List[str]]) -> List[str]:
         return [param[1] for param in params_list]
 
+    # TO-DO: Use a better variable naming scheme
+    def parse_let_declarations(interpreter, params_list: List[List[str]]) -> Dict[str, str]:
+        local_variables = {}
+        for param_triple in params_list:
+            # Parse type, value, and name
+            return_type: type = ValueHelper.get_variable_type_from_type_str(interpreter, param_triple[0])
+            variable_name: str = param_triple[1]
+            value = ValueHelper.parse_str_into_python_value(param_triple[2])
+            
+            # Type check the value with the parameter type before adding to map
+            if not ValueHelper.is_value_compatible_with_type(value, return_type):
+                InterpreterBase.error(ErrorType.TYPE_ERROR)
+
+            # Add to map
+            local_variables[variable_name] = { 'type': return_type, 'value': value }
+
+        return local_variables
+    
     # <===================== STATIC TYPE CHECKING ========================>
 
     def is_value_compatible_with_type(value: int | bool | str | None | ObjectDefinition, parsed_type: type) -> bool:
