@@ -187,6 +187,53 @@ def get_test_programs():
     ')'
     ]
 
+    # Test default return types
+    call_with_invalid_argument_types = [
+    '(class person',
+    '(method void nothing ()',
+    '(return "")',
+    ')',
+    ')',
+    '(class main',
+    '(field int x 10)',
+    '(field string y "xyz")',
+    '(field person p null)',
+    '(method void main ()',
+    '(call me print_stuff y y p)',
+    ')',
+    '(method void print_stuff ((int a) (string b) (person p))',
+    '(print a " " b " " p)', # Note - we aren't expected to print the person object, but do it for testing anyways
+    ')',
+    ')'
+    ]
+
+    call_with_valid_default_types = [
+  '(class person',
+  '(method void nothing ()',
+  '(print "")',
+  ')',
+  ')',
+  '(class main',
+  '(method int default_int ()',
+  '(return)',
+  ')',
+  '(method string default_string ()',
+  '(return)',
+  ')',
+  '(method bool default_bool ()',
+  '(return)',
+  ')',
+  '(method person default_person ()',
+  '(return)',
+  ')',
+  '(method void main ()',
+  '(begin',
+  '(print (call me default_int) " " (call me default_string) " " (call me default_bool) " " (call me default_person))',
+  ')',
+  ')',
+  ')'
+]
+
     return {
         "field_and_method_types": field_and_method_types,
         "set_valid_field_types": set_valid_field_types,
@@ -197,7 +244,8 @@ def get_test_programs():
         "set_object_on_primitive_field": set_object_on_primitive_field,
 
         "call_with_valid_argument_types": call_with_valid_argument_types,
-        "call_with_invalid_argument_types": call_with_invalid_argument_types
+        "call_with_invalid_argument_types": call_with_invalid_argument_types,
+        "call_with_valid_default_types": call_with_valid_default_types,
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level

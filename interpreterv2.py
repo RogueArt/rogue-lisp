@@ -128,7 +128,7 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     skip_tests = []  # , 'set_fields'
     # skip_tests = ['field_and_method_types']
-    run_tests = []
+    run_tests = ['call_with_valid_default_types']
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
