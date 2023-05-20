@@ -126,13 +126,16 @@ class ObjectDefinition:
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
+        # TO-DO: Add variable type checking
+
         # Check in order of increasing scope
         # 1. Check the parameter stack
         if name in self.parameters:
-            self.parameters[name] = new_val
+            self.parameters[name]['value'] = new_val
+            return
 
         # 2. Check the fields of the object
-        self.fields[name] = new_val
+        self.fields[name]['value'] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
     def evaluate_expression(self, expression) -> None|int|bool|str:
@@ -142,7 +145,7 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             # Case 1: Reached a variable
             if self.has_variable_with_name(expression):
-                return self.get_variable_with_name(expression) # .value
+                return self.get_variable_with_name(expression)['value'] # .value
             
             # Case 2: Reached a const value
             return ValueHelper.parse_str_into_python_value(expression)
@@ -237,14 +240,19 @@ class ObjectDefinition:
 
     def __execute_set_statement(self, statement) -> None:
         # Get the simplified result of the expression:
-        field_name, expression = statement[1], statement[2]
+        field_name, expression = statement[1], statement[2]        
 
         # Throw error if the variable we're setting does not exist
         if not self.has_variable_with_name(field_name):
             self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-        # Evaluate expressions befoer setting value
+        # Evaluate expressions before setting value
         val = self.evaluate_expression(expression)
+
+        # Throw error if the variable's type doesn't match value
+        if not ValueHelper.is_operand_compatible_with_operand(self.get_variable_with_name(field_name), val):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         self.update_variable_with_name(field_name, val)
         return
 
@@ -363,7 +371,7 @@ class ValueHelper():
             return InterpreterBase.TRUE_DEF
         elif value is False:
             return InterpreterBase.FALSE_DEF
-        elif value is None:
+        elif value is None or isinstance(value, ObjectDefinition):
             return InterpreterBase.NULL_DEF
         elif isinstance(value, str):
             return value # '"' + value + '"'
@@ -394,7 +402,7 @@ class ValueHelper():
   
     def is_operand_compatible_with_operand(operand1, operand2) -> bool:
       # If both operands are primitives, then if types don't match, not compatible
-      if ValueHelper.is_primitive_type(operand1) and ValueHelper.is_primitive_type(operand2):
+      if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
           return type(operand1) == type(operand2)
 
       # Object definition type - can be None or Class

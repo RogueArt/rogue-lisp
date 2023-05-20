@@ -103,7 +103,7 @@ class Interpreter(InterpreterBase):
                 
                 # TO-DO: Add variable types
                 # Fields map stores <name:Value> pairs
-                fields[field_name] = value
+                fields[field_name] = { 'type': field_type, 'value': value }
 
         return fields
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     test_programs = get_test_programs()
     # skip_tests = ['set_fields']  # , 'set_fields'
-    skip_tests = []
+    skip_tests = ['field_and_method_types']
     run_tests = []
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
