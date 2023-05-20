@@ -53,23 +53,34 @@ class Interpreter(InterpreterBase):
             self.class_definitions[class_name] = ClassDefinition(
                 self, self.interpreter_base, class_name, methods, fields)
 
+    # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
+    def __parse_expected_types_from_parameters_list(self, params_list: List[List[str]]) -> List[type]:
+        return [ValueHelper.get_variable_type_from_type_str(self, param_type) for param_type, _ in params_list]
+
+    def __parse_parameter_names_from_parameters_list(self, params_list: List[List[str]]) -> List[str]:
+        return [param[1] for param in params_list]
+
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
         for statement in class_def[2:]:
             if statement[0] == Interpreter.METHOD_DEF:
                 # Each method is in this format:
-                # ['method', <name>, [<parameters>], [<statements>]]
-                method_name: str = statement[1]
-                parameters_list: List[str] = statement[2]
-                top_level_statement = statement[3]
+                # ['method', <return type>, <name>, [<parameters>], [<statements>]]
+                return_type_str: str = statement[1]
+                method_name: str = statement[2]
+                parameters_list: List[str] = statement[3]
+                top_level_statement = statement[4]
                 
+                return_type = ValueHelper.get_return_type_from_type_str(self, return_type_str)
+                parameter_names = self.__parse_parameter_names_from_parameters_list(parameters_list)
+                parameter_types = self.__parse_expected_types_from_parameters_list(parameters_list)
+
                 # Duplicate method names are not allowed
                 if method_name in methods:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
                 # Methods map stores <name:MethodDefinition> pairs
-                methods[method_name] = MethodDefinition(
-                    method_name, top_level_statement, parameters_list)
+                methods[method_name] = MethodDefinition(return_type, method_name, top_level_statement, parameter_names, parameter_types)
         return methods
 
     def __get_fields_for_class(self, class_def: list) -> list:
