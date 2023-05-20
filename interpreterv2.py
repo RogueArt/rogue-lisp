@@ -45,13 +45,17 @@ class Interpreter(InterpreterBase):
             if class_name in self.class_definitions:
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
+           # Create a new class with given methods and fields
+            self.class_definitions[class_name] = ClassDefinition(
+                self, self.interpreter_base, class_name, [], [])
+
             # Parse the methods and fields from the object
             methods = self.__get_methods_for_class(class_def)
-            fields = self.__get_fields_for_class(class_def)
+            self.class_definitions[class_name].set_methods(methods)
 
-            # Create a new class with given methods and fields
-            self.class_definitions[class_name] = ClassDefinition(
-                self, self.interpreter_base, class_name, methods, fields)
+            fields = self.__get_fields_for_class(class_def)
+            self.class_definitions[class_name].set_fields(fields)
+ 
 
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
