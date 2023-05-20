@@ -5,9 +5,9 @@ from pprint import pprint
 import copy
 
 from v2_method_def import *
-from v2_class_def import ClassDefinition
-from v2_object_def import ObjectDefinition
-from v2_value_def import ValueHelper
+# from v2_class_def import ClassDefinition
+from v2_object_def import ObjectDefinition, ClassDefinition, ValueHelper
+# from v2_value_def import ValueHelper
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -76,15 +76,22 @@ class Interpreter(InterpreterBase):
         fields = {}
         for statement in class_def[2:]:
             if statement[0] == Interpreter.FIELD_DEF:
-                field_name: str = statement[1]
+                field_type_str: str = statement[1]
+                field_name: str = statement[2]
+                value_str: str = statement[3]
 
                 # Duplicate field names are not allowed
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-                value: List[str] = ValueHelper.parse_str_into_python_value(statement[2])
-
-                # Fields map stores <name:value> pairs
+                # Read the type hint and value, verify that they match
+                value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(value_str)
+                field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
+                if not ValueHelper.does_type_declaration_match_value(field_type, value):
+                    self.interpreter_base.error(ErrorType.TYPE_ERROR)
+                
+                # TO-DO: Add variable types
+                # Fields map stores <name:Value> pairs
                 fields[field_name] = value
 
         return fields
