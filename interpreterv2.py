@@ -480,21 +480,60 @@ class Interpreter(InterpreterBase):
                     method_name, top_level_statement, parameters_list)
         return methods
 
+
+    # TO-DO: Pick a better variable name
+    # TO-DO: Update function signature type
+    def convert_type(self, brewin_type_str: str):
+        if brewin_type_str == "int":
+            return int
+        elif brewin_type_str == "string":
+            return str
+        elif brewin_type_str == "bool":
+            return bool
+        
+        # If not a primitive type, then it must be a class
+        return self.find_definition_for_class(brewin_type_str) 
+    
+    # TO-DO: Add a class-lookup chain to this
+    def is_type_compatible_with_value(self, expected_type, value) -> bool:
+        if self.is_primitive_type(expected_type):
+            return expected_type is type(value)  
+        # Otherwise, it must be a class
+        elif value is None:
+            return True
+        # TO-DO: Handle if value is a subtype of expected type
+        elif expected_type is type(value):
+            return True
+        
+    def is_primitive_type(self, type) -> bool:
+        return type == int or type == str or type == bool
+
     def __get_fields_for_class(self, class_def: list) -> list:
         fields = {}
         for statement in class_def[2:]:
             if statement[0] == Interpreter.FIELD_DEF:
-                field_name: str = statement[1]
+                field_type_str: str = statement[1]
+                field_name: str = statement[2]
 
                 # Duplicate field names are not allowed
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-                value: List[str] = self.__parse_str_into_python_value(
-                    statement[2])
+                value: List[str] = self.__parse_str_into_python_value(statement[3])
+                
+                # Static type checking - check if field type compatible with value type
+                field_type = self.convert_type(field_type_str)
+                if not self.is_type_compatible_with_value(field_type, value):
+                    raise ValueError('error') # TO-DO: Make this into appropriate error
 
+                # TO-DO: For classes, we now store their value as an Optional<ClassName>
                 # Fields map stores <name:value> pairs
-                fields[field_name] = value
+
+                # TO-DO: For now, let's make classes be stored as tuples (ClassType, Option<ClassName>)
+                if self.is_primitive_type(field_type):
+                    fields[field_name] = value
+                else:
+                    fields[field_name] = (field_type, value)
 
         return fields
 
@@ -521,7 +560,7 @@ class Interpreter(InterpreterBase):
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
-    from testing import get_test_programs, fn
+    from manual_testing_v2 import get_test_programs, fn
 
     RED = '\033[31m'
     GREEN = '\033[32m'
