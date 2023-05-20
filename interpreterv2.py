@@ -53,13 +53,6 @@ class Interpreter(InterpreterBase):
             self.class_definitions[class_name] = ClassDefinition(
                 self, self.interpreter_base, class_name, methods, fields)
 
-    # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
-    def __parse_expected_types_from_parameters_list(self, params_list: List[List[str]]) -> List[type]:
-        return [ValueHelper.get_variable_type_from_type_str(self, param_type) for param_type, _ in params_list]
-
-    def __parse_parameter_names_from_parameters_list(self, params_list: List[List[str]]) -> List[str]:
-        return [param[1] for param in params_list]
-
     def __get_methods_for_class(self, class_def: list) -> list:
         methods = {}
         for statement in class_def[2:]:
@@ -72,8 +65,8 @@ class Interpreter(InterpreterBase):
                 top_level_statement = statement[4]
                 
                 return_type = ValueHelper.get_return_type_from_type_str(self, return_type_str)
-                parameter_names = self.__parse_parameter_names_from_parameters_list(parameters_list)
-                parameter_types = self.__parse_expected_types_from_parameters_list(parameters_list)
+                parameter_names = ValueHelper.parse_parameter_names_from_parameters_list(parameters_list)
+                parameter_types = ValueHelper.parse_expected_types_from_parameters_list(self, parameters_list)
 
                 # Duplicate method names are not allowed
                 if method_name in methods:
@@ -128,7 +121,7 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     skip_tests = []  # , 'set_fields'
     # skip_tests = ['field_and_method_types']
-    run_tests = ['call_with_valid_default_types']
+    run_tests = []
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:

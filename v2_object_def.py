@@ -8,8 +8,10 @@ from intbase import InterpreterBase
 from v2_object_def import *
 
 import copy
+
+
 class ObjectDefinition:
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None | int | bool | str]):
         self.interpreter = interpreter
         self.interpreter_base = interpreter_base
         self.class_name = class_name
@@ -17,12 +19,13 @@ class ObjectDefinition:
         self.fields = fields
         self.terminated = False
 
-        self.parameter_stack: List[Dict[str, None|int|bool|str]] = [{}]
-        self.parameters: Dict[str, None|int|bool|str] = self.parameter_stack[-1]
+        self.parameter_stack: List[Dict[str, None | int | bool | str]] = [{}]
+        self.parameters: Dict[str, None | int |
+                              bool | str] = self.parameter_stack[-1]
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name: str, parameters_map: Dict[str, None|int|bool|str]):
+    def call_method(self, method_name: str, parameters_map: Dict[str, None | int | bool | str]):
         # Add the parameter list to the call stack
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
@@ -30,7 +33,8 @@ class ObjectDefinition:
         self.final_result = None
 
         method = self.get_method_with_name(method_name)
-        self.final_result = ValueHelper.get_default_value_for_return_type(method.return_type)
+        self.final_result = ValueHelper.get_default_value_for_return_type(
+            method.return_type)
         statement = method.get_top_level_statement()
         self.__run_statement(statement)
 
@@ -53,7 +57,7 @@ class ObjectDefinition:
 
         if self.terminated:
             return
-        
+
         if self.is_a_print_statement(statement):
             self.__execute_print_statement(statement)
         elif self.is_a_set_statement(statement):
@@ -71,9 +75,10 @@ class ObjectDefinition:
             # Use this to block executing of any sibling methods
             self.terminated = True
         elif self.is_a_begin_statement(statement):
-            self.__execute_all_sub_statements_of_begin_statement(
-                statement)
-        
+            self.__execute_all_sub_statements_of_begin_statement(statement)
+        elif self.is_a_let_statement(statement):
+            self.__execute_let_statement(statement)
+
         return
 
     # <========== MATCH STATEMENT ============>
@@ -100,6 +105,9 @@ class ObjectDefinition:
 
     def is_a_begin_statement(self, statement):
         return statement[0] == InterpreterBase.BEGIN_DEF
+
+    def is_a_let_statement(self, statement):
+        return statement[0] == InterpreterBase.LET_DEF
 
     #  <========== GETTERS AND SETTERS ===========>
     def get_method_with_name(self, method_name: str) -> MethodDefinition:
@@ -141,22 +149,23 @@ class ObjectDefinition:
         self.fields[name]['value'] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
-    def evaluate_expression(self, expression) -> None|int|bool|str:
+    def evaluate_expression(self, expression) -> None | int | bool | str:
         # Arrived a singular value, not a list
         # Case 1: Reached a variable
         # Case 2: Reached a const value
         if not isinstance(expression, list):
             # Case 1: Reached a variable
             if self.has_variable_with_name(expression):
-                return self.get_variable_with_name(expression)['value'] # .value
-            
+                # .value
+                return self.get_variable_with_name(expression)['value']
+
             # Case 2: Reached a const value
             return ValueHelper.parse_str_into_python_value(expression)
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
             return self.__execute_call_statement(expression)
-        
+
         # Case 4: Reached a new statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.NEW_DEF:
             # Get the name of the field
@@ -167,8 +176,8 @@ class ObjectDefinition:
             val = class_def.instantiate_object()
 
             return val
-                
-        # Case 5: Reached a triple -- we need to recurse and evaluaute this binary expression       
+
+        # Case 5: Reached a triple -- we need to recurse and evaluaute this binary expression
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
@@ -179,7 +188,7 @@ class ObjectDefinition:
             # Except in the case of a None and Object comparison
             if not ValueHelper.is_operand_compatible_with_operand(operand1, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
-            
+
             # Case 5b: Operands must be compatible with operator
             if not ValueHelper.is_operand_compatible_with_operator(operator, operand1) or not ValueHelper.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
@@ -243,7 +252,7 @@ class ObjectDefinition:
 
     def __execute_set_statement(self, statement) -> None:
         # Get the simplified result of the expression:
-        field_name, expression = statement[1], statement[2]        
+        field_name, expression = statement[1], statement[2]
 
         # Throw error if the variable we're setting does not exist
         if not self.has_variable_with_name(field_name):
@@ -273,11 +282,12 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, value)
         return
 
-    def __execute_call_statement(self, statement) -> None|int|str|bool:
+    def __execute_call_statement(self, statement) -> None | int | str | bool:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
-        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name)
+        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(
+            obj_name)
 
         # Call made to object reference of null must generate an error
         if obj is None:
@@ -309,7 +319,8 @@ class ObjectDefinition:
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Add to map
-            parameter_map[parameter_name] = { 'type': parameter_type, 'value': value }
+            parameter_map[parameter_name] = {
+                'type': parameter_type, 'value': value}
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
@@ -327,10 +338,10 @@ class ObjectDefinition:
         if should_execute and not self.terminated:
             self.__run_statement(statement[2])
             self.__execute_while_statement(statement)
-        
+
         return
 
-    def __execute_if_statement(self, statement) -> None|int|str|bool:        
+    def __execute_if_statement(self, statement) -> None | int | str | bool:
         should_execute = self.evaluate_expression(statement[1])
 
         # Should always evaluate to a boolean condition
@@ -345,36 +356,41 @@ class ObjectDefinition:
             return self.__run_statement(statement[3])
 
         return
-    
+
     def __execute_return_statement(self, statement) -> None:
         # Get the final return value
         if len(statement) == 1:
             return
             # self.final_result = None
             # return None
-        
+
         # Any expression evaluated in return statement is the "final" value of method call
         self.final_result = self.evaluate_expression(statement[1])
-        return 
+        return
 
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
 
+    def __execute_let_statement(self, statement) -> None:
+        for sub_statement in statement[1:]:
+            self.__run_statement(sub_statement)
+
+
 class ValueHelper():
     def parse_str_into_python_value(value: str) -> None | int | bool | str:
-      if value == InterpreterBase.TRUE_DEF:
-          return True
-      elif value == InterpreterBase.FALSE_DEF:
-          return False
-      elif value == InterpreterBase.NULL_DEF:
-          return None
-      elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
-          return value[1:-1]
-      elif value.lstrip('-').isnumeric():
-          return int(value)
-      else:
-          InterpreterBase.error(ErrorType.NAME_ERROR)
+        if value == InterpreterBase.TRUE_DEF:
+            return True
+        elif value == InterpreterBase.FALSE_DEF:
+            return False
+        elif value == InterpreterBase.NULL_DEF:
+            return None
+        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
+            return value[1:-1]
+        elif value.lstrip('-').isnumeric():
+            return int(value)
+        else:
+            InterpreterBase.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def convert_python_value_to_str(value) -> str:
@@ -385,12 +401,12 @@ class ValueHelper():
         elif value is None or isinstance(value, ObjectDefinition):
             return InterpreterBase.NULL_DEF
         elif isinstance(value, str):
-            return value # '"' + value + '"'
+            return value  # '"' + value + '"'
         elif isinstance(value, int):
             return str(value)
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
-        
+
     def is_operand_compatible_with_operator(operator: str, operand) -> bool:
         if isinstance(operand, str) and operator == '+':
             return True  # String concatenation is allowed with the + operator
@@ -401,30 +417,40 @@ class ValueHelper():
         elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
             return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
         elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
-            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
+            # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
+            return True
         elif operand is None and operator in ['==', '!=']:
             return True  # Null comparison is allowed with the == and != operators
         elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
-            return True # Object comparison is allowed with the == and != operators 
+            return True  # Object comparison is allowed with the == and != operators
         elif operator == '!':
-            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
+            # Unary NOT is only allowed with booleans
+            return isinstance(operand, bool)
         else:
             return False  # Operand and operator are not compatible
-  
-    def is_operand_compatible_with_operand(operand1, operand2) -> bool:
-      # If both operands are primitives, then if types don't match, not compatible
-      if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
-          return type(operand1) == type(operand2)
 
-      # Object definition type - can be None or Class
-      return True      
+    def is_operand_compatible_with_operand(operand1, operand2) -> bool:
+        # If both operands are primitives, then if types don't match, not compatible
+        if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
+            return type(operand1) == type(operand2)
+
+        # Object definition type - can be None or Class
+        return True
 
     # In Brewin, string, int, and bool are primitive types
     def is_primitive_type(value):
         return isinstance(value, str) or isinstance(value, int) or isinstance(value, bool)
-    
+
+    # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
+    def parse_expected_types_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[type]:
+        return [ValueHelper.get_variable_type_from_type_str(interpreter, param_type) for param_type, _ in params_list]
+
+    def parse_parameter_names_from_parameters_list(params_list: List[List[str]]) -> List[str]:
+        return [param[1] for param in params_list]
+
     # <===================== STATIC TYPE CHECKING ========================>
-    def is_value_compatible_with_type(value: int|bool|str|None|ObjectDefinition, parsed_type: type) -> bool:
+
+    def is_value_compatible_with_type(value: int | bool | str | None | ObjectDefinition, parsed_type: type) -> bool:
         # Case 1 - Primitives
         if ValueHelper.is_primitive_type(parsed_type):
             return type(value) == parsed_type
@@ -440,9 +466,8 @@ class ValueHelper():
     # def get_type_from_value(value: int|bool|str|None|ObjectDefinition) -> type:
     #     if ValueHelper.is_primitive_type(type(value)):
     #         return type(value)
-        
-    #     if isinstance(value, ObjectDefinition):
 
+    #     if isinstance(value, ObjectDefinition):
 
     #     pass
 
@@ -476,6 +501,7 @@ class ValueHelper():
         # TO-DO: Check the case where nothing is returned vs null object
         else:
             return None
+
 
 class ClassDefinition:
     # constructor for a ClassDefinition
