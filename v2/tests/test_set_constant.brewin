@@ -1,0 +1,17 @@
+(class main
+ (field string x "abc")
+ (method void main ()
+  (begin
+   (set x "def")
+   (print x)
+   (let ((int y 10) (bool z false))
+     (begin
+       (set y 20)
+       (print y)
+       (set z true)
+       (print z)
+     )
+   )
+  )
+ )
+)

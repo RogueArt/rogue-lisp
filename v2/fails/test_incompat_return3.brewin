@@ -1,0 +1,4 @@
+(class main
+  (method void foo () (return 5))
+  (method void main () (call me foo))
+)

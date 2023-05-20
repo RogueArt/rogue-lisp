@@ -1,0 +1,9 @@
+(class main
+  (method void main ())
+)
+(class dog
+  (method void main () (return))
+)
+(class dog
+  (method void main () (return))
+)

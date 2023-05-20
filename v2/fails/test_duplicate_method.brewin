@@ -1,0 +1,7 @@
+(class main
+  (method void main ()
+    (print "hello")
+  )
+  (method void x () (print "hello"))
+  (method void x () (print "hello"))
+)

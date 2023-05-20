@@ -1,0 +1,10 @@
+(class main
+  (field int x 20)
+  (field int y 2)
+  (method void main ()
+    (call me math 3 4 5)
+  )
+  (method void math ((int a) (int b) (int c))
+      (print (+ (- b a) (* (/ x y) (% 7 c))))
+  )
+)

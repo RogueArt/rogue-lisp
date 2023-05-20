@@ -1,0 +1,18 @@
+(class main
+  (field main x null)
+  (field int y 10)
+  (method void main ()
+    (begin
+      (set x (call me get))
+      (call me change 11)
+      (call x foo)
+      (call me foo)
+      (call x change 12)
+      (call x foo)
+      (call me foo)
+    )
+  )
+  (method main get () (return me))
+  (method void foo () (print y))
+  (method void change ((int z)) (set y z))
+)

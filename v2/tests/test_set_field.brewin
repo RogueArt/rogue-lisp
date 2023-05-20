@@ -1,0 +1,15 @@
+(class main
+ (field string x "abc")
+ (field bool y false)
+ (field int z 10)
+ (method void main ()
+  (begin
+   (set x "def")
+   (print x)
+   (set z 20)
+   (print z)
+   (set y true)
+   (print y)
+  )
+ )
+)

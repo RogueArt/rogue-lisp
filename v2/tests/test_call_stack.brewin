@@ -1,0 +1,15 @@
+(class main
+  (field int x 0)
+  (method void main ()
+    (begin
+      (call me set1 1)
+      (print x)
+    )
+  )
+  (method void set1 ((int y))
+    (call me set2 y)
+  )
+  (method void set2 ((int z))
+    (set x z)
+  )
+)

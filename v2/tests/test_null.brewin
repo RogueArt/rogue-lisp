@@ -1,0 +1,12 @@
+(class obj
+  (method void pr ()
+    (print 10)
+  )
+)
+
+(class main
+  (field obj x null)
+  (method void main ()
+      (print (== x null))
+  )
+)

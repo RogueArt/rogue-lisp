@@ -1,0 +1,8 @@
+(class main
+  (field int num 0)
+  (method void main ()
+    (begin
+      (if (<= "a" "b") (print 1))
+    )
+  )
+)

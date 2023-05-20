@@ -1,0 +1,8 @@
+(class main
+  (method void main ()
+    (print "hello")
+  )
+  (field int x 10)
+  (field int x 100)
+)
+

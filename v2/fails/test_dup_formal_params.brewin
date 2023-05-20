@@ -1,0 +1,16 @@
+(class main
+  (method int value_or_zero ((int q) (string q))
+     (begin
+       (if (< q 0)
+         (print "q is less than zero")
+         (return q)
+       )
+    )
+  )
+  (method void main ()
+    (begin
+      (print (call me value_or_zero 10 "str"))
+      (print (call me value_or_zero -10))
+    )
+  )
+)

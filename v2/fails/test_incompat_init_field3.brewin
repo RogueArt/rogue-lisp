@@ -1,0 +1,6 @@
+(class main
+  (field string p null)
+  (method void main ()
+    (print 1)
+  )
+)

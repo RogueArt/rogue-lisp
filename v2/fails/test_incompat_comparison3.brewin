@@ -1,0 +1,13 @@
+(class main
+  (field dog d null)
+  (field cat c null)
+  (method void main ()
+    (print (== d c))
+  )
+)
+(class dog
+  (method void main () (return))
+)
+(class cat
+  (method void main () (return))
+)

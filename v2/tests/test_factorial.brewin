@@ -1,0 +1,13 @@
+(class main
+  (field int result 1)
+  (method void main ()
+    (print (call me factorial 4)))
+
+  (method int factorial ((int n))
+    (begin
+      (set result 1)
+      (while (> n 0)
+        (begin
+          (set result (* n result))
+          (set n (- n 1))))
+      (return result))))

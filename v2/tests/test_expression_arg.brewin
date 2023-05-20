@@ -1,0 +1,8 @@
+(class main
+  (method void main ()
+    (call me printMe (+ 1 1))
+  )
+  (method void printMe ((int x))
+    (print x)
+  )
+)

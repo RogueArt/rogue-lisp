@@ -1,0 +1,17 @@
+(class main
+  (method void main ()
+    (call me foo (new student) (new person))
+  )
+  (method void foo ((student s) (person p))
+    (if (== s p)
+      (print 1)
+      (print 2)
+    )
+  )
+)
+(class person
+  (method void main () (return null))
+)
+(class student inherits person
+  (method void main () (return null))
+)

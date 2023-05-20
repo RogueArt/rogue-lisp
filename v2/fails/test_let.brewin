@@ -1,0 +1,7 @@
+(class main
+  (method void main ()
+    (let ((int x 10) (string x "10"))
+       (print x)
+    )
+  )
+)

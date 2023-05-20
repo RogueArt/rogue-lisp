@@ -1,0 +1,18 @@
+(class main
+ (field int d 100)
+
+ (method int foo ((int f))
+     (return f)
+ )
+ (method int bar ((int f))
+     (return d)
+ )
+ 
+ (method void main ()
+   (begin
+   (print (call me bar 3))
+   (print (call me foo 1))
+   (print (call me bar 3))
+   )
+ )
+)

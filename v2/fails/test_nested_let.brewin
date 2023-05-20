@@ -1,0 +1,19 @@
+(class main
+  (method void main ()
+    (begin
+      (let ((string person "chelsey"))
+        (begin
+          (print person)
+          (let ((int x 10))
+            (begin
+              (print x)
+              (print person)
+            )
+          )
+          (print x)
+          (print person)
+        )
+      )
+    )
+  )
+)

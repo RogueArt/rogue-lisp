@@ -1,0 +1,15 @@
+(class main
+  (field person pers null)
+  (method void ask_person_to_talk ((person p))
+    (call p talk)
+  )
+  (method void main ()
+    (begin
+      (set pers (new person))
+      (call me ask_person_to_talk pers)
+    )
+  )
+)
+(class person
+  (method void talk () (print "gud"))
+)

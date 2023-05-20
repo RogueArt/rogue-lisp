@@ -1,0 +1,9 @@
+(class main
+ (field main a null)
+ (method void main ()
+  (begin
+    (set a null)
+    (print "proper")
+  )
+ )
+)

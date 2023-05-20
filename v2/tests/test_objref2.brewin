@@ -1,0 +1,26 @@
+(class bar
+  (method void bar ()
+    (return)
+  )
+)
+
+(class foo inherits bar
+  (method void dd ()
+    (print 10)
+  )
+)
+
+(class main
+  (field foo x null)
+  (field bar y null)
+  
+  (method void main ()
+    (begin
+      (print (== x y))
+      (set x (new foo))
+      (print (== x y))
+      (set y x)
+      (print (== x (new foo)))
+    )
+  )
+)

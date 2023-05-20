@@ -1,0 +1,15 @@
+(class main
+  (method void foo ((int x))
+    (let ((int y 5) (string z "bar"))
+      (call me hi)
+    )
+  )
+  (method void main ()
+    (call me foo 10)
+  )
+  (method void hi ()
+    (begin
+      (print y)
+    )
+  )
+)

@@ -1,0 +1,9 @@
+(class main
+  (method void foo ((int q))
+    (if (== q 0)
+      (return)
+      (print "q is non-zero")
+    )
+  )
+  (method void main () (call me foo 5))
+)

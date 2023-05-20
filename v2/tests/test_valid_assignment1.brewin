@@ -1,0 +1,15 @@
+(class main
+  (field int x 0)
+  (method void main ()
+    (begin
+      (call me foo 1 2)
+      (print x)
+    )
+  )
+  (method void foo ((int param1) (int param2))
+    (begin
+      (set param1 param2)
+      (set x param2)
+    )
+  )
+)

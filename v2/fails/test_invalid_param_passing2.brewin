@@ -1,0 +1,16 @@
+(class main
+  (field person pers null)
+  (method void ask_dog_to_bark ((dog d)) (call d bark))
+  (method void main ()
+    (begin
+      (set pers (new person))
+      (call me ask_dog_to_bark pers)
+    )
+  )
+)
+
+(class person
+  (method void run ()
+    (print 1)
+  )
+)

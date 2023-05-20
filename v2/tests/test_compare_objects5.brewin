@@ -1,0 +1,23 @@
+(class main
+  (method void main ()
+    (call me foo (new animal) (new dog) (new pup))
+  )
+  (method void foo ((animal a) (dog d) (pup p))
+    (if (!= a d)
+      (if (!= p a)
+        (if (!= d null)
+          (print "gud")
+        )
+      )
+    )
+  )
+)
+(class animal
+  (method void main () (return))
+)
+(class dog inherits animal
+  (method void main () (return))
+)
+(class pup inherits dog
+  (method void main () (return))
+)

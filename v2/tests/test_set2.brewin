@@ -1,0 +1,19 @@
+(class main
+  (method int main ()
+    (begin
+      (call me foo (new person) (new person))
+      (call pf sayHi)
+    )
+  )
+  (field person pf null)
+  (method void foo ((person p1) (person p2))
+    (begin
+      (set p1 p2)
+      (set pf p1)
+    )
+  )
+)
+(class person
+  (method void main () (return null))
+  (method void sayHi () (print "Hi"))
+)

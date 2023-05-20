@@ -1,0 +1,13 @@
+(class main
+  (method int foo ()
+    (let ((int x 2))
+      (let ((int y 3))
+        (return x)
+        (print "x")
+      )
+    )
+  )
+  (method void main ()
+    (print (call me foo))
+  )
+)

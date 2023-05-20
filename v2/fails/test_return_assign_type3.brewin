@@ -1,0 +1,18 @@
+(class d
+  (method d foo ()
+    (return)
+  )
+)
+
+(class b inherits d
+  (method void x () (return))
+)
+
+(class main
+    (field b a null)
+ (method b foo ()
+   (return (call b foo)))
+ (method void main ()
+  (set a (call me foo))
+ )
+)

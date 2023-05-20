@@ -1,0 +1,6 @@
+(class main
+  (field int x 0)
+  (method void main ()
+    (set x (new other_class))
+  )
+)

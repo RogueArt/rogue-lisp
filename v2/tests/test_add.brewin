@@ -1,0 +1,9 @@
+(class main
+  (field int x 1)
+  (method void main ()
+    (call me add 1)
+  )
+  (method void add ((int y))
+    (print (+ x y))
+  )
+)

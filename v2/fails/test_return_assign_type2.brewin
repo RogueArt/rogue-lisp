@@ -1,0 +1,8 @@
+(class main
+    (field string a "false")
+ (method bool foo () 
+   (return true))
+ (method void main ()
+  (set a (call me foo))
+ )
+)
