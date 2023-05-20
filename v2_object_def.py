@@ -21,6 +21,9 @@ class ObjectDefinition:
         self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
 
+        # Always add the self reference value
+        self.fields[InterpreterBase.ME_DEF] = { 'type': class_name, 'value': self }
+
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
 
@@ -51,6 +54,15 @@ class ObjectDefinition:
         # Imagine if we do call1 -> call2 -> call 3
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
+
+        # Void methods must always return nothing
+        if method.return_type is None:
+            return None
+
+        # Type check the final result with the return type
+        if not ValueHelper.is_value_compatible_with_type(self.final_result, method.return_type):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         return self.final_result
 
     # runs/interprets the passed-in statement until completion and
@@ -434,7 +446,8 @@ class ValueHelper():
         elif value is False:
             return InterpreterBase.FALSE_DEF
         elif value is None or isinstance(value, ObjectDefinition):
-            return InterpreterBase.NULL_DEF
+            # return InterpreterBase.NULL_DEF
+            return "None"
         elif isinstance(value, str):
             return value  # '"' + value + '"'
         elif isinstance(value, int):
@@ -464,6 +477,7 @@ class ValueHelper():
         else:
             return False  # Operand and operator are not compatible
 
+    # TO-DO: Verify how this function works
     def is_operand_compatible_with_operand(operand1, operand2) -> bool:
         # If both operands are primitives, then if types don't match, not compatible
         if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
@@ -473,15 +487,28 @@ class ValueHelper():
         return True
 
     # In Brewin, string, int, and bool are primitive types
-    def is_primitive_type(value):
-        return isinstance(value, str) or isinstance(value, int) or isinstance(value, bool)
+    def is_primitive_type(val) -> bool:
+        return isinstance(val, (int, str, bool))
 
     # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
     def parse_expected_types_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[type]:
         return [ValueHelper.get_variable_type_from_type_str(interpreter, param_type) for param_type, _ in params_list]
 
-    def parse_parameter_names_from_parameters_list(params_list: List[List[str]]) -> List[str]:
-        return [param[1] for param in params_list]
+    def parse_parameter_names_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[str]:
+        parameter_names = []
+        duplicate_names = set()
+
+        for param in params_list:
+            name = param[1]
+            if name in parameter_names:
+                duplicate_names.add(name)
+            else:
+                parameter_names.append(name)
+
+        if duplicate_names:
+            raise interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
+
+        return parameter_names
 
     # TO-DO: Use a better variable naming scheme
     def parse_let_declarations(interpreter, params_list: List[List[str]]) -> Dict[str, str]:
