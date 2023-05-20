@@ -410,7 +410,7 @@ class ObjectDefinition:
 
 
 class ValueHelper():
-    def parse_str_into_python_value(value: str) -> None | int | bool | str:
+    def parse_str_into_python_value(interpreter, value: str) -> None | int | bool | str:
         if value == InterpreterBase.TRUE_DEF:
             return True
         elif value == InterpreterBase.FALSE_DEF:
@@ -423,7 +423,7 @@ class ValueHelper():
             return int(value)
         else:
             # TO-DO: Design this class better to not have to return this
-            return ErrorType.NAME_ERROR
+            interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def convert_python_value_to_str(value) -> str:
