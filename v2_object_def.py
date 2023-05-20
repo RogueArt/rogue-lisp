@@ -16,7 +16,6 @@ class ObjectDefinition:
         self.methods = methods
         self.fields = fields
         self.terminated = False
-        self.final_result = None
 
         self.parameter_stack: List[Dict[str, None|int|bool|str]] = [{}]
         self.parameters: Dict[str, None|int|bool|str] = self.parameter_stack[-1]
@@ -31,6 +30,7 @@ class ObjectDefinition:
         self.final_result = None
 
         method = self.get_method_with_name(method_name)
+        self.final_result = ValueHelper.get_default_value_for_return_type(method.return_type)
         statement = method.get_top_level_statement()
         self.__run_statement(statement)
 
@@ -349,8 +349,9 @@ class ObjectDefinition:
     def __execute_return_statement(self, statement) -> None:
         # Get the final return value
         if len(statement) == 1:
-            self.final_result = None
-            return None
+            return
+            # self.final_result = None
+            # return None
         
         # Any expression evaluated in return statement is the "final" value of method call
         self.final_result = self.evaluate_expression(statement[1])
@@ -464,6 +465,17 @@ class ValueHelper():
             return None
         else:
             return ValueHelper.get_variable_type_from_type_str(interpreter, type_str)
+
+    def get_default_value_for_return_type(return_type):
+        if return_type is int:
+            return 0
+        elif return_type is str:
+            return ''
+        elif return_type is bool:
+            return False
+        # TO-DO: Check the case where nothing is returned vs null object
+        else:
+            return None
 
 class ClassDefinition:
     # constructor for a ClassDefinition
