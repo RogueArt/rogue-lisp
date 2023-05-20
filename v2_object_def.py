@@ -29,7 +29,7 @@ class ObjectDefinition:
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name: str, parameters_map: Dict[str, None | int | bool | str]):
+    def call_method(self, method_name: str, parameters_map: Dict[str, BrewinAsPythonValue]):
         # Add the parameter list to the call stack
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
@@ -114,7 +114,7 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.LET_DEF
 
     #  <========== GETTERS AND SETTERS ===========>
-    def get_method_with_name(self, method_name: str) -> MethodDefinition:
+    def get_method_with_name(self, method_name: str) -> None|MethodDefinition:
         if method_name in self.methods:
             return self.methods[method_name]
         else:
@@ -134,7 +134,7 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return name in self.fields
 
-    def get_variable_with_name(self, name: str) -> None | int | str | bool:
+    def get_variable_with_name(self, name: str) -> BrewinAsPythonValue:
         # 1. Check local variables first
         if name in self.local_variables:
             return self.local_variables[name]
@@ -146,7 +146,7 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-    def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
+    def update_variable_with_name(self, name: str, new_val: BrewinAsPythonValue) -> None:
         # Type check to see if we can update the v ariable
         if not ValueHelper.is_value_compatible_with_type(new_val, self.get_variable_with_name(name)['type']):
             self.interpreter_base.error(ErrorType.TYPE_ERROR)
@@ -166,7 +166,7 @@ class ObjectDefinition:
         self.fields[name]['value'] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
-    def evaluate_expression(self, expression) -> None | int | bool | str:
+    def evaluate_expression(self, expression) -> BrewinAsPythonValue:
         # Arrived a singular value, not a list
         # Case 1: Reached a variable
         # Case 2: Reached a const value
@@ -300,7 +300,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, value)
         return
 
-    def __execute_call_statement(self, statement) -> None | int | str | bool:
+    def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
@@ -359,7 +359,7 @@ class ObjectDefinition:
 
         return
 
-    def __execute_if_statement(self, statement) -> None | int | str | bool:
+    def __execute_if_statement(self, statement) -> BrewinAsPythonValue:
         should_execute = self.evaluate_expression(statement[1])
 
         # Should always evaluate to a boolean condition
@@ -412,7 +412,7 @@ class ObjectDefinition:
 
 
 class ValueHelper():
-    def parse_str_into_python_value(interpreter, value: str) -> None | int | bool | str:
+    def parse_str_into_python_value(interpreter, value: str) -> BrewinAsPythonValue:
         if value == InterpreterBase.TRUE_DEF:
             return True
         elif value == InterpreterBase.FALSE_DEF:
@@ -428,7 +428,7 @@ class ValueHelper():
             interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
-    def convert_python_value_to_str(value) -> str:
+    def convert_python_value_to_str(value: BrewinAsPythonValue) -> str:
         if value is True:
             return InterpreterBase.TRUE_DEF
         elif value is False:
@@ -442,7 +442,7 @@ class ValueHelper():
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
 
-    def is_operand_compatible_with_operator(operator: str, operand) -> bool:
+    def is_operand_compatible_with_operator(operator: str, operand: BrewinAsPythonValue) -> bool:
         if isinstance(operand, str) and operator == '+':
             return True  # String concatenation is allowed with the + operator
         elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
@@ -464,7 +464,7 @@ class ValueHelper():
         else:
             return False  # Operand and operator are not compatible
 
-    def is_operand_compatible_with_operand(operand1, operand2) -> bool:
+    def is_operand_compatible_with_operand(operand1: BrewinAsPythonValue, operand2: BrewinAsPythonValue) -> bool:
         # If both operands are primitives, then if types don't match, not compatible
         if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
             return type(operand1) == type(operand2)
@@ -520,15 +520,7 @@ class ValueHelper():
         # Case 3
         return False
 
-    # def get_type_from_value(value: int|bool|str|None|ObjectDefinition) -> type:
-    #     if ValueHelper.is_primitive_type(type(value)):
-    #         return type(value)
-
-    #     if isinstance(value, ObjectDefinition):
-
-    #     pass
-
-    def is_primitive_type(expected_type):
+    def is_primitive_type(expected_type) -> bool:
         return expected_type in [int, str, bool]
 
     def get_variable_type_from_type_str(interpreter, type_str: str):
