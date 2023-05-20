@@ -152,7 +152,7 @@ class ObjectDefinition:
         # Check in order of increasing scope
         # 1. Check local variables first
         if name in self.local_variables:
-            self.parameters[name]['value'] = new_val
+            self.local_variables[name]['value'] = new_val
             return
 
         # 2. Check the parameter stack
@@ -174,10 +174,8 @@ class ObjectDefinition:
                 return self.get_variable_with_name(expression)['value']
 
             # Case 2: Reached a const value
-            val = ValueHelper.parse_str_into_python_value(expression)
+            val = ValueHelper.parse_str_into_python_value(self.interpreter, expression)
             # TO-DO: Update this to handle all types of error types
-            if val == ErrorType.NAME_ERROR:
-                self.interpreter_base.error(ErrorType.NAME_ERROR)
             return val
 
         # Case 3: Reached a call statement
@@ -292,7 +290,7 @@ class ObjectDefinition:
         # Get and parse the user's input value
         input_val = self.interpreter_base.get_input()
         if input_type == InterpreterBase.INPUT_INT_DEF:
-            value = ValueHelper.parse_str_into_python_value(input_val)
+            value = ValueHelper.parse_str_into_python_value(self.interpreter, input_val)
         else:
             value = input_val
 
@@ -391,8 +389,14 @@ class ObjectDefinition:
             self.__run_statement(sub_statement)
 
     def __execute_let_statement(self, statement) -> None:
-        # Initialize and add the local variables
+        # Get local parameters added in this scope
+        # As we get more and more nested, we should be able to refer to the outer scopes as well
         parsed_local_variables = ValueHelper.parse_let_declarations(self.interpreter, statement[1])
+        for variable_name, variable_info in self.local_variables.items():
+            # Only add variables that can't be shadowed
+            if variable_name not in parsed_local_variables:
+                parsed_local_variables[variable_name] = variable_info
+
         self.local_variables_stack.append(parsed_local_variables)
         self.local_variables = self.local_variables_stack[-1]
 
@@ -406,7 +410,7 @@ class ObjectDefinition:
 
 
 class ValueHelper():
-    def parse_str_into_python_value(value: str) -> None | int | bool | str:
+    def parse_str_into_python_value(interpreter, value: str) -> None | int | bool | str:
         if value == InterpreterBase.TRUE_DEF:
             return True
         elif value == InterpreterBase.FALSE_DEF:
@@ -419,7 +423,7 @@ class ValueHelper():
             return int(value)
         else:
             # TO-DO: Design this class better to not have to return this
-            return ErrorType.NAME_ERROR
+            interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def convert_python_value_to_str(value) -> str:
@@ -484,7 +488,7 @@ class ValueHelper():
             # Parse type, value, and name
             return_type: type = ValueHelper.get_variable_type_from_type_str(interpreter, param_triple[0])
             variable_name: str = param_triple[1]
-            value = ValueHelper.parse_str_into_python_value(param_triple[2])
+            value = ValueHelper.parse_str_into_python_value(interpreter, param_triple[2])
             
             # Type check the value with the parameter type before adding to map
             if not ValueHelper.is_value_compatible_with_type(value, return_type):
