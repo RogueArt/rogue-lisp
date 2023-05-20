@@ -1,7 +1,6 @@
 from typing import List
+from v2_constants import *
 
-# TO-DO: Expose this globally through flag, not as variable
-debug = 0
 class MethodDefinition:
     def __init__(self, return_type: type, method_name: str, top_level_statement: list, parameter_names: List[str], parameter_types: List[type]):
         self.return_type: type = return_type
