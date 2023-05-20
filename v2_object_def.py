@@ -488,7 +488,11 @@ class ValueHelper():
             
             # Type check the value with the parameter type before adding to map
             if not ValueHelper.is_value_compatible_with_type(value, return_type):
-                InterpreterBase.error(ErrorType.TYPE_ERROR)
+                interpreter.interpreter_base.error(ErrorType.TYPE_ERROR)
+
+            # Check that the variable hasn't already been added yet
+            if variable_name in local_variables:
+                interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
 
             # Add to map
             local_variables[variable_name] = { 'type': return_type, 'value': value }
