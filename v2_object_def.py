@@ -2,8 +2,6 @@ from typing import List, Dict
 from intbase import InterpreterBase, ErrorType
 
 from v2_method_def import *
-from v2_object_def import *
-from v2_value_def import *
 
 class ObjectDefinition:
     def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
@@ -338,3 +336,6 @@ class ObjectDefinition:
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
+
+# TO-DO: Fix the circular import requiring this to be at the bottom
+from v2_value_def import *

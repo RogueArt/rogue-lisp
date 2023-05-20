@@ -5,8 +5,9 @@ from pprint import pprint
 import copy
 
 from v2_method_def import *
-from v2_object_def import *
-from v2_class_def import *
+from v2_class_def import ClassDefinition
+from v2_object_def import ObjectDefinition
+from v2_value_def import ValueHelper
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -81,8 +82,7 @@ class Interpreter(InterpreterBase):
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-                value: List[str] = self.__parse_str_into_python_value(
-                    statement[2])
+                value: List[str] = ValueHelper.parse_str_into_python_value(statement[2])
 
                 # Fields map stores <name:value> pairs
                 fields[field_name] = value
@@ -96,19 +96,6 @@ class Interpreter(InterpreterBase):
         
         # If not found, then throw an error for trying to get invalid class
         self.interpreter_base.error(ErrorType.TYPE_ERROR)
-
-    def __parse_str_into_python_value(self, value: str):
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        else:
-            return int(value)
-
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":

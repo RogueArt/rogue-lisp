@@ -14,7 +14,7 @@ class ValueHelper():
       elif value.lstrip('-').isnumeric():
           return int(value)
       else:
-          InterpreterBase.interpreter_base.error(ErrorType.NAME_ERROR)
+          InterpreterBase.error(ErrorType.NAME_ERROR)
 
     # For display formatting - convert python value to string
     def convert_python_value_to_str(value) -> str:
