@@ -89,7 +89,7 @@ class Interpreter(InterpreterBase):
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
                 # Read the type hint and value, verify that they match
-                value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(value_str)
+                value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(self, value_str)
                 field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
                 if not ValueHelper.is_value_compatible_with_type(value, field_type):
                     self.interpreter_base.error(ErrorType.TYPE_ERROR)

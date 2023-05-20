@@ -174,10 +174,8 @@ class ObjectDefinition:
                 return self.get_variable_with_name(expression)['value']
 
             # Case 2: Reached a const value
-            val = ValueHelper.parse_str_into_python_value(expression)
+            val = ValueHelper.parse_str_into_python_value(self.interpreter, expression)
             # TO-DO: Update this to handle all types of error types
-            if val == ErrorType.NAME_ERROR:
-                self.interpreter_base.error(ErrorType.NAME_ERROR)
             return val
 
         # Case 3: Reached a call statement
@@ -292,7 +290,7 @@ class ObjectDefinition:
         # Get and parse the user's input value
         input_val = self.interpreter_base.get_input()
         if input_type == InterpreterBase.INPUT_INT_DEF:
-            value = ValueHelper.parse_str_into_python_value(input_val)
+            value = ValueHelper.parse_str_into_python_value(self.interpreter, input_val)
         else:
             value = input_val
 
@@ -484,7 +482,7 @@ class ValueHelper():
             # Parse type, value, and name
             return_type: type = ValueHelper.get_variable_type_from_type_str(interpreter, param_triple[0])
             variable_name: str = param_triple[1]
-            value = ValueHelper.parse_str_into_python_value(param_triple[2])
+            value = ValueHelper.parse_str_into_python_value(interpreter, param_triple[2])
             
             # Type check the value with the parameter type before adding to map
             if not ValueHelper.is_value_compatible_with_type(value, return_type):
