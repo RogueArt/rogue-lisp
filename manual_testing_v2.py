@@ -234,6 +234,40 @@ def get_test_programs():
   ')'
 ]
 
+    # Simple valid case - one level variable case
+    valid_local_variables_with_let = [
+  '(class main',
+  '(method void foo ()',
+  '(begin',
+  '(let ((int y 5))',
+  '(print y)\t\t# this prints out 5',
+  ')',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo)',
+  ')',
+  ')'
+]
+    
+    # Invalid case - trying to access local variable outside of where it's declared
+    invalid_local_variable_access_with_let = [
+  '(class main',
+  '(method void foo ()',
+  '(begin',
+  '(let ((int y 5))',
+  '(print y)\t\t# this prints out 5',
+  ')',
+  '(print y)',
+  ')',
+  ')',
+  '(method void main ()',
+  '(call me foo)',
+  ')',
+  ')'
+]
+    
+
     return {
         "field_and_method_types": field_and_method_types,
         "set_valid_field_types": set_valid_field_types,
@@ -246,6 +280,9 @@ def get_test_programs():
         "call_with_valid_argument_types": call_with_valid_argument_types,
         "call_with_invalid_argument_types": call_with_invalid_argument_types,
         "call_with_valid_default_types": call_with_valid_default_types,
+
+        "valid_local_variables_with_let": valid_local_variables_with_let,
+        'invalid_local_variable_access_with_let': invalid_local_variable_access_with_let
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
