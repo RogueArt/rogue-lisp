@@ -20,8 +20,10 @@ class ObjectDefinition:
         self.terminated = False
 
         self.parameter_stack: List[Dict[str, None | int | bool | str]] = [{}]
-        self.parameters: Dict[str, None | int |
-                              bool | str] = self.parameter_stack[-1]
+        self.parameters: Dict[str, None | int | bool | str] = self.parameter_stack[-1]
+
+        self.local_variables_stack = [{}]
+        self.local_variables = self.local_variables_stack[-1]
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
@@ -119,19 +121,27 @@ class ObjectDefinition:
     # Account for scoping
     # Note: we have to explicitly check for this as Python only has "None", not "undefined"
     def has_variable_with_name(self, name: str) -> bool:
-        # 1. Check parameter level scope for method
+        # 1. Check in local variables first
+        if name in self.local_variables:
+            return True
+
+        # 2. Check parameter level scope for method
         if name in self.parameters:
             return True
 
-        # 2. Check field level scope for object
+        # 3. Check field level scope for object
         return name in self.fields
 
     def get_variable_with_name(self, name: str) -> None | int | str | bool:
-        # 1. Check parameter level scope for method
+        # 1. Check local variables first
+        if name in self.local_variables:
+            return self.local_variables[name]
+
+        # 2. Check parameter level scope for method
         if name in self.parameters:
             return self.parameters[name]
 
-        # 2. Check field level scope for object
+        # 3. Check field level scope for object
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
@@ -140,7 +150,12 @@ class ObjectDefinition:
             self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
         # Check in order of increasing scope
-        # 1. Check the parameter stack
+        # 1. Check local variables first
+        if name in self.local_variables:
+            self.parameters[name]['value'] = new_val
+            return
+
+        # 2. Check the parameter stack
         if name in self.parameters:
             self.parameters[name]['value'] = new_val
             return
@@ -156,11 +171,14 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             # Case 1: Reached a variable
             if self.has_variable_with_name(expression):
-                # .value
                 return self.get_variable_with_name(expression)['value']
 
             # Case 2: Reached a const value
-            return ValueHelper.parse_str_into_python_value(expression)
+            val = ValueHelper.parse_str_into_python_value(expression)
+            # TO-DO: Update this to handle all types of error types
+            if val == ErrorType.NAME_ERROR:
+                self.interpreter_base.error(ErrorType.NAME_ERROR)
+            return val
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
@@ -373,8 +391,18 @@ class ObjectDefinition:
             self.__run_statement(sub_statement)
 
     def __execute_let_statement(self, statement) -> None:
-        for sub_statement in statement[1:]:
+        # Initialize and add the local variables
+        parsed_local_variables = ValueHelper.parse_let_declarations(self.interpreter, statement[1])
+        self.local_variables_stack.append(parsed_local_variables)
+        self.local_variables = self.local_variables_stack[-1]
+
+        # Behave same as begin statement -- begin executing lines
+        for sub_statement in statement[2:]:
             self.__run_statement(sub_statement)
+
+        # Make sure to pop local variables once done executing
+        self.local_variables_stack.pop()
+        self.local_variables = self.local_variables_stack[-1]
 
 
 class ValueHelper():
@@ -390,7 +418,8 @@ class ValueHelper():
         elif value.lstrip('-').isnumeric():
             return int(value)
         else:
-            InterpreterBase.error(ErrorType.NAME_ERROR)
+            # TO-DO: Design this class better to not have to return this
+            return ErrorType.NAME_ERROR
 
     # For display formatting - convert python value to string
     def convert_python_value_to_str(value) -> str:
