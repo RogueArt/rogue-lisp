@@ -5,6 +5,7 @@ from pprint import pprint
 import copy
 
 # For debug levels
+debug = 0
 class MethodDefinition:
     def __init__(self, method_name: str, top_level_statement: list, parameter_names: List[str]):
         self.method_name = method_name
@@ -142,49 +143,17 @@ class ObjectDefinition:
         self.fields[name] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
-    # TO-DO: Have ObjectDefinition inherit this
-    def __parse_str_into_python_value(self, value: str) -> None | int | bool | str:
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        elif self.__is_integer_in_string_form(value):
-            return int(value)
-        elif self.has_variable_with_name(value):
-            return self.get_variable_with_name(value)
-        else:
-            self.interpreter_base.error(ErrorType.NAME_ERROR)
-
-    # For display formatting - convert python value to string
-    def __convert_python_value_to_str(self, value) -> str:
-        if value is True:
-            return InterpreterBase.TRUE_DEF
-        elif value is False:
-            return InterpreterBase.FALSE_DEF
-        elif value is None:
-            return InterpreterBase.NULL_DEF
-        elif isinstance(value, str):
-            return value # '"' + value + '"'
-        elif isinstance(value, int):
-            return str(value)
-        else:
-            raise ValueError('Unsupported value type: {}'.format(type(value)))
-
-    def __is_integer_in_string_form(self, s: str | int):
-        if s[0] in ('-', '+'):
-            return s[1:].isdigit()
-        return s.isdigit()
-
     def evaluate_expression(self, expression) -> None|int|bool|str:
         # Arrived a singular value, not a list
-        # Case 1: Reached a const value
-        # Case 2: Reached a variable
+        # Case 1: Reached a variable
+        # Case 2: Reached a const value
         if not isinstance(expression, list):
-            return self.__parse_str_into_python_value(expression)
+            # Case 1: Reached a variable
+            if self.has_variable_with_name(expression):
+                return self.get_variable_with_name(expression)
+            
+            # Case 2: Reached a const value
+            return ValueHelper.parse_str_into_python_value(expression)
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
@@ -210,11 +179,11 @@ class ObjectDefinition:
 
             # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
-            if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
+            if not ValueHelper.is_operand_compatible_with_operand(operand1, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
             
             # Case 5b: Operands must be compatible with operator
-            if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
+            if not ValueHelper.is_operand_compatible_with_operator(operator, operand1) or not ValueHelper.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Case 5c: Both are compatible and of same type, so evaluate them
@@ -261,32 +230,12 @@ class ObjectDefinition:
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
-    def is_operand_compatible_with_operator(self, operator: str, operand) -> bool:
-        if isinstance(operand, str) and operator == '+':
-            return True  # String concatenation is allowed with the + operator
-        elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
-            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
-        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
-            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
-        elif operand is None and operator in ['==', '!=']:
-            return True  # Null comparison is allowed with the == and != operators
-        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
-            return True # Object comparison is allowed with the == and != operators 
-        elif operator == '!':
-            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
-        else:
-            return False  # Operand and operator are not compatible
-
     def __execute_print_statement(self, statement) -> None:
 
         formatted_arguments = []
         for arg in statement[1:]:
             val = self.evaluate_expression(arg)
-            formatted_val = self.__convert_python_value_to_str(val)
+            formatted_val = ValueHelper.convert_python_value_to_str(val)
             formatted_arguments.append(formatted_val)
 
         if debug >= 1:
@@ -313,7 +262,7 @@ class ObjectDefinition:
         # Get and parse the user's input value
         input_val = self.interpreter_base.get_input()
         if input_type == InterpreterBase.INPUT_INT_DEF:
-            value = self.__parse_str_into_python_value(input_val)
+            value = ValueHelper.parse_str_into_python_value(input_val)
         else:
             value = input_val
 
@@ -400,6 +349,69 @@ class ObjectDefinition:
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
+
+class ValueHelper():
+    def parse_str_into_python_value(value: str) -> None | int | bool | str:
+      if value == InterpreterBase.TRUE_DEF:
+          return True
+      elif value == InterpreterBase.FALSE_DEF:
+          return False
+      elif value == InterpreterBase.NULL_DEF:
+          return None
+      elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
+          return value[1:-1]
+      elif value.lstrip('-').isnumeric():
+          return int(value)
+      else:
+          InterpreterBase.interpreter_base.error(ErrorType.NAME_ERROR)
+
+    # For display formatting - convert python value to string
+    def convert_python_value_to_str(value) -> str:
+        if value is True:
+            return InterpreterBase.TRUE_DEF
+        elif value is False:
+            return InterpreterBase.FALSE_DEF
+        elif value is None:
+            return InterpreterBase.NULL_DEF
+        elif isinstance(value, str):
+            return value # '"' + value + '"'
+        elif isinstance(value, int):
+            return str(value)
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+        
+    def is_operand_compatible_with_operator(operator: str, operand) -> bool:
+        if isinstance(operand, str) and operator == '+':
+            return True  # String concatenation is allowed with the + operator
+        elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
+            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
+        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
+            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
+        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
+            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
+        elif operand is None and operator in ['==', '!=']:
+            return True  # Null comparison is allowed with the == and != operators
+        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
+            return True # Object comparison is allowed with the == and != operators 
+        elif operator == '!':
+            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
+        else:
+            return False  # Operand and operator are not compatible
+  
+    def is_operand_compatible_with_operand(operand1, operand2) -> bool:
+      # If both operands are primitives, then if types don't match, not compatible
+      if ValueHelper.is_primitive_type(operand1) and ValueHelper.is_primitive_type(operand2):
+          return type(operand1) == type(operand2)
+
+      # Object definition type - can be None or Class
+      return True      
+
+    # In Brewin, string, int, and bool are primitive types
+    def is_primitive_type(value):
+        return isinstance(value, str) or isinstance(value, int) or isinstance(value, bool)
+
 
 class ClassDefinition:
     # constructor for a ClassDefinition
@@ -489,7 +501,7 @@ class Interpreter(InterpreterBase):
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-                value: List[str] = self.__parse_str_into_python_value(
+                value: List[str] = ValueHelper.parse_str_into_python_value(
                     statement[2])
 
                 # Fields map stores <name:value> pairs
@@ -504,19 +516,6 @@ class Interpreter(InterpreterBase):
         
         # If not found, then throw an error for trying to get invalid class
         self.interpreter_base.error(ErrorType.TYPE_ERROR)
-
-    def __parse_str_into_python_value(self, value: str):
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        else:
-            return int(value)
-
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ from typing import List, Dict
 from intbase import InterpreterBase, ErrorType
 
 from v2_method_def import *
-from v2_object_def import *
 
 class ObjectDefinition:
     def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
@@ -131,49 +130,17 @@ class ObjectDefinition:
         self.fields[name] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
-    # TO-DO: Have ObjectDefinition inherit this
-    def __parse_str_into_python_value(self, value: str) -> None | int | bool | str:
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        elif self.__is_integer_in_string_form(value):
-            return int(value)
-        elif self.has_variable_with_name(value):
-            return self.get_variable_with_name(value)
-        else:
-            self.interpreter_base.error(ErrorType.NAME_ERROR)
-
-    # For display formatting - convert python value to string
-    def __convert_python_value_to_str(self, value) -> str:
-        if value is True:
-            return InterpreterBase.TRUE_DEF
-        elif value is False:
-            return InterpreterBase.FALSE_DEF
-        elif value is None:
-            return InterpreterBase.NULL_DEF
-        elif isinstance(value, str):
-            return value # '"' + value + '"'
-        elif isinstance(value, int):
-            return str(value)
-        else:
-            raise ValueError('Unsupported value type: {}'.format(type(value)))
-
-    def __is_integer_in_string_form(self, s: str | int):
-        if s[0] in ('-', '+'):
-            return s[1:].isdigit()
-        return s.isdigit()
-
     def evaluate_expression(self, expression) -> None|int|bool|str:
         # Arrived a singular value, not a list
-        # Case 1: Reached a const value
-        # Case 2: Reached a variable
+        # Case 1: Reached a variable
+        # Case 2: Reached a const value
         if not isinstance(expression, list):
-            return self.__parse_str_into_python_value(expression)
+            # Case 1: Reached a variable
+            if self.has_variable_with_name(expression):
+                return self.get_variable_with_name(expression)
+            
+            # Case 2: Reached a const value
+            return ValueHelper.parse_str_into_python_value(expression)
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
@@ -199,11 +166,11 @@ class ObjectDefinition:
 
             # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
-            if (type(operand1) != type(operand2)) and (operand1 is not None and operand2 is not None):
+            if not ValueHelper.is_operand_compatible_with_operand(operand1, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
             
             # Case 5b: Operands must be compatible with operator
-            if not self.is_operand_compatible_with_operator(operator, operand1) or not self.is_operand_compatible_with_operator(operator, operand2):
+            if not ValueHelper.is_operand_compatible_with_operator(operator, operand1) or not ValueHelper.is_operand_compatible_with_operator(operator, operand2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Case 5c: Both are compatible and of same type, so evaluate them
@@ -250,32 +217,12 @@ class ObjectDefinition:
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
-    def is_operand_compatible_with_operator(self, operator: str, operand) -> bool:
-        if isinstance(operand, str) and operator == '+':
-            return True  # String concatenation is allowed with the + operator
-        elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
-            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
-        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
-            return True  # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
-        elif operand is None and operator in ['==', '!=']:
-            return True  # Null comparison is allowed with the == and != operators
-        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
-            return True # Object comparison is allowed with the == and != operators 
-        elif operator == '!':
-            return isinstance(operand, bool)  # Unary NOT is only allowed with booleans
-        else:
-            return False  # Operand and operator are not compatible
-
     def __execute_print_statement(self, statement) -> None:
 
         formatted_arguments = []
         for arg in statement[1:]:
             val = self.evaluate_expression(arg)
-            formatted_val = self.__convert_python_value_to_str(val)
+            formatted_val = ValueHelper.convert_python_value_to_str(val)
             formatted_arguments.append(formatted_val)
 
         if debug >= 1:
@@ -302,7 +249,7 @@ class ObjectDefinition:
         # Get and parse the user's input value
         input_val = self.interpreter_base.get_input()
         if input_type == InterpreterBase.INPUT_INT_DEF:
-            value = self.__parse_str_into_python_value(input_val)
+            value = ValueHelper.parse_str_into_python_value(input_val)
         else:
             value = input_val
 
@@ -389,3 +336,6 @@ class ObjectDefinition:
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
         for sub_statement in statement[1:]:
             self.__run_statement(sub_statement)
+
+# TO-DO: Fix the circular import requiring this to be at the bottom
+from v2_value_def import *
