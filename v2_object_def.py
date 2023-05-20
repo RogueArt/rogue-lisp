@@ -19,6 +19,9 @@ class ObjectDefinition:
         self.fields = fields
         self.terminated = False
 
+        # Always add the self reference value
+        self.fields[InterpreterBase.ME_DEF] = { 'type': class_name, 'value': self }
+
         self.parameter_stack: List[Dict[str, None | int | bool | str]] = [{}]
         self.parameters: Dict[str, None | int | bool | str] = self.parameter_stack[-1]
 
@@ -472,6 +475,7 @@ class ValueHelper():
         else:
             return False  # Operand and operator are not compatible
 
+    # TO-DO: Verify how this function works
     def is_operand_compatible_with_operand(operand1, operand2) -> bool:
         # If both operands are primitives, then if types don't match, not compatible
         if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
@@ -481,8 +485,8 @@ class ValueHelper():
         return True
 
     # In Brewin, string, int, and bool are primitive types
-    def is_primitive_type(value):
-        return isinstance(value, str) or isinstance(value, int) or isinstance(value, bool)
+    def is_primitive_type(val) -> bool:
+        return isinstance(val, (int, str, bool))
 
     # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
     def parse_expected_types_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[type]:
