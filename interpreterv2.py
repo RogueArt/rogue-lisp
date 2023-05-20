@@ -126,8 +126,8 @@ if __name__ == "__main__":
     RESET = '\033[0m'
 
     test_programs = get_test_programs()
-    # skip_tests = ['set_fields']  # , 'set_fields'
-    skip_tests = ['field_and_method_types']
+    skip_tests = []  # , 'set_fields'
+    # skip_tests = ['field_and_method_types']
     run_tests = []
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):

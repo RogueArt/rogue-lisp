@@ -302,7 +302,14 @@ class ObjectDefinition:
 
             # Update map with the appropriate parameter names
             parameter_name = method.parameter_names[index]
-            parameter_map[parameter_name] = value
+            parameter_type = method.parameter_types[index]
+
+            # Type check the value with the parameter type before adding to map
+            if not ValueHelper.is_value_compatible_with_type(value, parameter_type):
+                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
+            # Add to map
+            parameter_map[parameter_name] = { 'type': parameter_type, 'value': value }
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
@@ -429,6 +436,14 @@ class ValueHelper():
         # Case 3
         return False
 
+    # def get_type_from_value(value: int|bool|str|None|ObjectDefinition) -> type:
+    #     if ValueHelper.is_primitive_type(type(value)):
+    #         return type(value)
+        
+    #     if isinstance(value, ObjectDefinition):
+
+
+    #     pass
 
     def is_primitive_type(expected_type):
         return expected_type in [int, str, bool]
