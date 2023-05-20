@@ -202,7 +202,7 @@ class ObjectDefinition:
 
             # Get the class and instantiate a new object of this class
             class_def = self.interpreter.find_definition_for_class(field_name)
-            val = class_def.instantiate_object()
+            val = (class_def, class_def.instantiate_object())
 
             return val
                 
@@ -301,16 +301,36 @@ class ObjectDefinition:
 
     def __execute_set_statement(self, statement) -> None:
         # Get the simplified result of the expression:
-        field_name, expression = statement[1], statement[2]
+        variable_name, expression = statement[1], statement[2]
 
         # Throw error if the variable we're setting does not exist
-        if not self.has_variable_with_name(field_name):
+        if not self.has_variable_with_name(variable_name):
             self.interpreter_base.error(ErrorType.NAME_ERROR)
 
         # Evaluate expressions befoer setting value
         val = self.evaluate_expression(expression)
-        self.update_variable_with_name(field_name, val)
+
+        # Check type of variable versus evaluated expression
+        old_value = self.get_variable_with_name(variable_name)
+        if not self.does_new_value_have_same_type_as_old(old_value, val):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
+        self.update_variable_with_name(variable_name, val)
         return
+    
+    def is_primitive_type(self, type) -> bool:
+        return type == int or type == str or type == bool
+
+    # TO-DO: Add a class-lookup chain to this
+    def does_new_value_have_same_type_as_old(self, old_value, value) -> bool:
+        if self.is_primitive_type(type(old_value)):
+            return type(old_value) is type(value)
+        # Otherwise, it must be a class
+        elif value is None:
+            return True
+        # TO-DO: Handle if value is a subtype of expected type
+        elif type(old_value) is type(value):
+            return True
 
     def __execute_input_statement(self, statement) -> None:
         input_type, field_name = statement
@@ -330,7 +350,10 @@ class ObjectDefinition:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
-        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name)
+        if obj_name == InterpreterBase.ME_DEF:
+            obj = self
+        else:
+            obj_class_def, obj = self.evaluate_expression(obj_name)
 
         # Call made to object reference of null must generate an error
         if obj is None:
