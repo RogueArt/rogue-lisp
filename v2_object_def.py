@@ -152,7 +152,7 @@ class ObjectDefinition:
         # Check in order of increasing scope
         # 1. Check local variables first
         if name in self.local_variables:
-            self.parameters[name]['value'] = new_val
+            self.local_variables[name]['value'] = new_val
             return
 
         # 2. Check the parameter stack
