@@ -567,6 +567,12 @@ class ClassDefinition:
         self.methods = methods
         self.fields = fields
 
+    def set_methods(self, methods):
+        self.methods = methods
+
+    def set_fields(self, fields):
+        self.fields = fields
+
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
         obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.name,
