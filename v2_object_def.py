@@ -440,7 +440,7 @@ class ValueHelper():
         if type_str == 'void':
             return None
         else:
-            return ValueHelper.get_variable_type(interpreter, type_str)
+            return ValueHelper.get_variable_type_from_type_str(interpreter, type_str)
 
 class ClassDefinition:
     # constructor for a ClassDefinition
