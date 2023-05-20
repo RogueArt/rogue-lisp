@@ -4,6 +4,8 @@ $sourceFiles = @(
     "v2_method_def.py"
     "v2_object_def.py"
     "v2_value_def.py"
+    "v2_constants.py"
+    "README.md"
 )
 
 $zipFile = "interpreterv2.zip"

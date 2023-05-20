@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import List, Dict, Union, Annotated
 from intbase import InterpreterBase, ErrorType
 
-from v2_method_def import *
-# from v2_class_def import value
 from bparser import BParser
 from intbase import InterpreterBase
-from v2_object_def import *
+from v2_constants import *
+from v2_method_def import MethodDefinition
+from v2_value_def import ValueHelper
 
 BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
 
@@ -32,7 +32,7 @@ class ObjectDefinition:
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
-    def call_method(self, method_name: str, parameters_map: Dict[str, None | int | bool | str]):
+    def call_method(self, method_name: str, parameters_map: Dict[str, BrewinAsPythonValue]):
         # Add the parameter list to the call stack
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
@@ -126,7 +126,7 @@ class ObjectDefinition:
         return statement[0] == InterpreterBase.LET_DEF
 
     #  <========== GETTERS AND SETTERS ===========>
-    def get_method_with_name(self, method_name: str) -> MethodDefinition:
+    def get_method_with_name(self, method_name: str) -> None|MethodDefinition:
         if method_name in self.methods:
             return self.methods[method_name]
         else:
@@ -146,7 +146,7 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return name in self.fields
 
-    def get_variable_with_name(self, name: str) -> None | int | str | bool:
+    def get_variable_with_name(self, name: str) -> BrewinAsPythonValue:
         # 1. Check local variables first
         if name in self.local_variables:
             return self.local_variables[name]
@@ -158,7 +158,7 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-    def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
+    def update_variable_with_name(self, name: str, new_val: BrewinAsPythonValue) -> None:
         # Type check to see if we can update the v ariable
         if not ValueHelper.is_value_compatible_with_type(new_val, self.get_variable_with_name(name)['type']):
             self.interpreter_base.error(ErrorType.TYPE_ERROR)
@@ -178,7 +178,7 @@ class ObjectDefinition:
         self.fields[name]['value'] = new_val
 
     # <==== EVALUATION & VALUE HANDLER =========>
-    def evaluate_expression(self, expression) -> None | int | bool | str:
+    def evaluate_expression(self, expression) -> BrewinAsPythonValue:
         # Arrived a singular value, not a list
         # Case 1: Reached a variable
         # Case 2: Reached a const value
@@ -312,7 +312,7 @@ class ObjectDefinition:
         self.update_variable_with_name(field_name, value)
         return
 
-    def __execute_call_statement(self, statement) -> None | int | str | bool:
+    def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
 
         # Get object based on if it's the current or some other object
@@ -371,7 +371,7 @@ class ObjectDefinition:
 
         return
 
-    def __execute_if_statement(self, statement) -> None | int | str | bool:
+    def __execute_if_statement(self, statement) -> BrewinAsPythonValue:
         should_execute = self.evaluate_expression(statement[1])
 
         # Should always evaluate to a boolean condition
@@ -422,188 +422,3 @@ class ObjectDefinition:
         self.local_variables_stack.pop()
         self.local_variables = self.local_variables_stack[-1]
 
-
-class ValueHelper():
-    def parse_str_into_python_value(interpreter, value: str) -> None | int | bool | str:
-        if value == InterpreterBase.TRUE_DEF:
-            return True
-        elif value == InterpreterBase.FALSE_DEF:
-            return False
-        elif value == InterpreterBase.NULL_DEF:
-            return None
-        elif isinstance(value, str) and value[0] == '"' and value[-1] == '"':
-            return value[1:-1]
-        elif value.lstrip('-').isnumeric():
-            return int(value)
-        else:
-            # TO-DO: Design this class better to not have to return this
-            interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
-
-    # For display formatting - convert python value to string
-    def convert_python_value_to_str(value) -> str:
-        if value is True:
-            return InterpreterBase.TRUE_DEF
-        elif value is False:
-            return InterpreterBase.FALSE_DEF
-        elif value is None or isinstance(value, ObjectDefinition):
-            # return InterpreterBase.NULL_DEF
-            return "None"
-        elif isinstance(value, str):
-            return value  # '"' + value + '"'
-        elif isinstance(value, int):
-            return str(value)
-        else:
-            raise ValueError('Unsupported value type: {}'.format(type(value)))
-
-    def is_operand_compatible_with_operator(operator: str, operand) -> bool:
-        if isinstance(operand, str) and operator == '+':
-            return True  # String concatenation is allowed with the + operator
-        elif type(operand) is int and operator in ['+', '-', '*', '/', '%']:
-            return True  # Integer arithmetic is allowed with the +, -, *, /, and % operators
-        elif isinstance(operand, int) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # Integer comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, str) and operator in ['<', '>', '<=', '>=', '!=', '==']:
-            return True  # String comparison is allowed with the <, >, <=, >=, !=, and == operators
-        elif isinstance(operand, bool) and operator in ['&', '|', '==', '!=']:
-            # Boolean comparison is allowed with the & (AND), | (OR), ==, and != operators
-            return True
-        elif operand is None and operator in ['==', '!=']:
-            return True  # Null comparison is allowed with the == and != operators
-        elif isinstance(operand, ObjectDefinition) and operator in ['==', '!=']:
-            return True  # Object comparison is allowed with the == and != operators
-        elif operator == '!':
-            # Unary NOT is only allowed with booleans
-            return isinstance(operand, bool)
-        else:
-            return False  # Operand and operator are not compatible
-
-    # TO-DO: Verify how this function works
-    def is_operand_compatible_with_operand(operand1, operand2) -> bool:
-        # If both operands are primitives, then if types don't match, not compatible
-        if ValueHelper.is_primitive_type(operand1) or ValueHelper.is_primitive_type(operand2):
-            return type(operand1) == type(operand2)
-
-        # Object definition type - can be None or Class
-        return True
-
-    # In Brewin, string, int, and bool are primitive types
-    def is_primitive_type(val) -> bool:
-        return isinstance(val, (int, str, bool))
-
-    # Parameters list comes in as [type_str, argument_name], we need to convert this to a list of types
-    def parse_expected_types_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[type]:
-        return [ValueHelper.get_variable_type_from_type_str(interpreter, param_type) for param_type, _ in params_list]
-
-    def parse_parameter_names_from_parameters_list(interpreter, params_list: List[List[str]]) -> List[str]:
-        parameter_names = []
-        duplicate_names = set()
-
-        for param in params_list:
-            name = param[1]
-            if name in parameter_names:
-                duplicate_names.add(name)
-            else:
-                parameter_names.append(name)
-
-        if duplicate_names:
-            raise interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
-
-        return parameter_names
-
-    # TO-DO: Use a better variable naming scheme
-    def parse_let_declarations(interpreter, params_list: List[List[str]]) -> Dict[str, str]:
-        local_variables = {}
-        for param_triple in params_list:
-            # Parse type, value, and name
-            return_type: type = ValueHelper.get_variable_type_from_type_str(interpreter, param_triple[0])
-            variable_name: str = param_triple[1]
-            value = ValueHelper.parse_str_into_python_value(interpreter, param_triple[2])
-            
-            # Type check the value with the parameter type before adding to map
-            if not ValueHelper.is_value_compatible_with_type(value, return_type):
-                interpreter.interpreter_base.error(ErrorType.TYPE_ERROR)
-
-            # Check that the variable hasn't already been added yet
-            if variable_name in local_variables:
-                interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
-
-            # Add to map
-            local_variables[variable_name] = { 'type': return_type, 'value': value }
-
-        return local_variables
-    
-    # <===================== STATIC TYPE CHECKING ========================>
-
-    def is_value_compatible_with_type(value: int | bool | str | None | ObjectDefinition, parsed_type: type) -> bool:
-        # Case 1 - Primitives
-        if ValueHelper.is_primitive_type(parsed_type):
-            return type(value) == parsed_type
-
-        # Case 2 - Object definition
-        # TO-DO: Handle derived objects
-        if isinstance(parsed_type, ClassDefinition):
-            return value is None or parsed_type.name == value.class_name
-
-        # Case 3
-        return False
-
-    # def get_type_from_value(value: int|bool|str|None|ObjectDefinition) -> type:
-    #     if ValueHelper.is_primitive_type(type(value)):
-    #         return type(value)
-
-    #     if isinstance(value, ObjectDefinition):
-
-    #     pass
-
-    def is_primitive_type(expected_type):
-        return expected_type in [int, str, bool]
-
-    def get_variable_type_from_type_str(interpreter, type_str: str):
-        if type_str == "int":
-            return int
-        elif type_str == "string":
-            return str
-        elif type_str == "bool":
-            return bool
-
-        # If not a primitive type, then it must be a class
-        return interpreter.find_definition_for_class(type_str)
-
-    def get_return_type_from_type_str(interpreter, type_str):
-        if type_str == 'void':
-            return None
-        else:
-            return ValueHelper.get_variable_type_from_type_str(interpreter, type_str)
-
-    def get_default_value_for_return_type(return_type):
-        if return_type is int:
-            return 0
-        elif return_type is str:
-            return ''
-        elif return_type is bool:
-            return False
-        # TO-DO: Check the case where nothing is returned vs null object
-        else:
-            return None
-
-
-class ClassDefinition:
-    # constructor for a ClassDefinition
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, name, methods, fields):
-        self.interpreter = interpreter
-        self.interpreter_base = interpreter_base
-        self.name = name
-        self.methods = methods
-        self.fields = fields
-
-    def set_methods(self, methods):
-        self.methods = methods
-
-    def set_fields(self, fields):
-        self.fields = fields
-
-    # uses the definition of a class to create and return an instance of it
-    def instantiate_object(self):
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.name,
-                               copy.deepcopy(self.methods), copy.deepcopy(self.fields))
-        return obj

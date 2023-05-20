@@ -4,10 +4,11 @@ from bparser import BParser
 from pprint import pprint
 import copy
 
-from v2_method_def import *
-# from v2_class_def import ClassDefinition
-from v2_object_def import ObjectDefinition, ClassDefinition, ValueHelper
-# from v2_value_def import ValueHelper
+from v2_constants import *
+from v2_class_def import ClassDefinition
+from v2_object_def import ObjectDefinition
+from v2_method_def import MethodDefinition
+from v2_value_def import ValueHelper
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -114,7 +115,7 @@ class Interpreter(InterpreterBase):
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
-    from manual_testing_v2 import get_test_programs, fn
+    from manual_testing_v2 import get_test_programs
 
     RED = '\033[31m'
     GREEN = '\033[32m'
