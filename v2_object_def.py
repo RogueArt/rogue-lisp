@@ -1,4 +1,6 @@
-from typing import List, Dict
+from __future__ import annotations
+
+from typing import List, Dict, Union, Annotated
 from intbase import InterpreterBase, ErrorType
 
 from v2_method_def import *
@@ -7,25 +9,25 @@ from bparser import BParser
 from intbase import InterpreterBase
 from v2_object_def import *
 
+BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
+
 import copy
-
-
 class ObjectDefinition:
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None | int | bool | str]):
-        self.interpreter = interpreter
-        self.interpreter_base = interpreter_base
-        self.class_name = class_name
-        self.methods = methods
-        self.fields = fields
+    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
+        self.interpreter: Interpreter = interpreter
+        self.interpreter_base: InterpreterBase = interpreter_base
+        self.class_name: str = class_name
+        self.methods: Dict[str, MethodDefinition]  = methods
+        self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
 
         # Always add the self reference value
         self.fields[InterpreterBase.ME_DEF] = { 'type': class_name, 'value': self }
 
-        self.parameter_stack: List[Dict[str, None | int | bool | str]] = [{}]
-        self.parameters: Dict[str, None | int | bool | str] = self.parameter_stack[-1]
+        self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
+        self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
 
-        self.local_variables_stack = [{}]
+        self.local_variables_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.local_variables = self.local_variables_stack[-1]
 
     # <========== CODE RUNNERS ============>
@@ -96,31 +98,31 @@ class ObjectDefinition:
         return
 
     # <========== MATCH STATEMENT ============>
-    def is_a_print_statement(self, statement):
+    def is_a_print_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.PRINT_DEF
 
-    def is_a_set_statement(self, statement):
+    def is_a_set_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.SET_DEF
 
-    def is_an_input_statement(self, statement):
+    def is_an_input_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.INPUT_INT_DEF or statement[0] == InterpreterBase.INPUT_STRING_DEF
 
-    def is_a_call_statement(self, statement):
+    def is_a_call_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.CALL_DEF
 
-    def is_a_while_statement(self, statement):
+    def is_a_while_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.WHILE_DEF
 
-    def is_an_if_statement(self, statement):
+    def is_an_if_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.IF_DEF
 
-    def is_a_return_statement(self, statement):
+    def is_a_return_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.RETURN_DEF
 
-    def is_a_begin_statement(self, statement):
+    def is_a_begin_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.BEGIN_DEF
 
-    def is_a_let_statement(self, statement):
+    def is_a_let_statement(self, statement: Annotated[list[str], 1]) -> bool:
         return statement[0] == InterpreterBase.LET_DEF
 
     #  <========== GETTERS AND SETTERS ===========>
