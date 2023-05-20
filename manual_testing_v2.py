@@ -146,8 +146,8 @@ def get_test_programs():
     ]
 
 
-    # Argument type parsing
-    argument_types = [
+    # Valid case for calling a method with argument types
+    call_with_valid_argument_types = [
     '(class person',
     '(method void nothing ()',
     '(return "")',
@@ -165,35 +165,39 @@ def get_test_programs():
     ')',
     ')'
     ]
-    
-    method_types_with_obj = [
-  '(class person',
-  '(method void nothing ()',
-  '(return "")',
-  ')',
-  ')',
-  '(class main',
-  '(field int x 10)',
-  '(field string y "xyz")',
-  '(field person p null)',
-  '(method void main ()',
-  '(call me print_stuff x y)',
-  ')',
-  '(method void print_stuff ((int a) (string b) (person p))',
-  '(print a " " b)',
-  ')',
-  ')'
-]
 
+    # Valid case for calling a method with argument types
+    # Expect a type error
+    call_with_invalid_argument_types = [
+    '(class person',
+    '(method void nothing ()',
+    '(return "")',
+    ')',
+    ')',
+    '(class main',
+    '(field int x 10)',
+    '(field string y "xyz")',
+    '(field person p null)',
+    '(method void main ()',
+    '(call me print_stuff y y p)',
+    ')',
+    '(method void print_stuff ((int a) (string b) (person p))',
+    '(print a " " b " " p)', # Note - we aren't expected to print the person object, but do it for testing anyways
+    ')',
+    ')'
+    ]
 
     return {
         "field_and_method_types": field_and_method_types,
         "set_valid_field_types": set_valid_field_types,
 
         # Exception tests
-        # "set_string_on_int_field": set_string_on_int_field,
-        # "set_int_on_string_field": set_int_on_string_field,
-        # "set_object_on_primitive_field": set_object_on_primitive_field
+        "set_string_on_int_field": set_string_on_int_field,
+        "set_int_on_string_field": set_int_on_string_field,
+        "set_object_on_primitive_field": set_object_on_primitive_field,
+
+        "call_with_valid_argument_types": call_with_valid_argument_types,
+        "call_with_invalid_argument_types": call_with_invalid_argument_types
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
