@@ -13,18 +13,18 @@ BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
 
 import copy
 class ObjectDefinition:
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None | int | bool | str]):
-        self.interpreter = interpreter
-        self.interpreter_base = interpreter_base
-        self.class_name = class_name
-        self.methods = methods
-        self.fields = fields
+    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
+        self.interpreter: Interpreter = interpreter
+        self.interpreter_base: InterpreterBase = interpreter_base
+        self.class_name: str = class_name
+        self.methods: Dict[str, MethodDefinition]  = methods
+        self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
 
-        self.parameter_stack: List[Dict[str, None | int | bool | str]] = [{}]
-        self.parameters: Dict[str, None | int | bool | str] = self.parameter_stack[-1]
+        self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
+        self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
 
-        self.local_variables_stack = [{}]
+        self.local_variables_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.local_variables = self.local_variables_stack[-1]
 
     # <========== CODE RUNNERS ============>
