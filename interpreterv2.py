@@ -99,7 +99,7 @@ class Interpreter(InterpreterBase):
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
-    from testing import get_test_programs, fn
+    from manual_testing_v2 import get_test_programs, fn
 
     RED = '\033[31m'
     GREEN = '\033[32m'
