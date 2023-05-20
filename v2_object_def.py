@@ -21,6 +21,9 @@ class ObjectDefinition:
         self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
 
+        # Always add the self reference value
+        self.fields[InterpreterBase.ME_DEF] = { 'type': class_name, 'value': self }
+
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
 
@@ -51,6 +54,15 @@ class ObjectDefinition:
         # Imagine if we do call1 -> call2 -> call 3
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
+
+        # Void methods must always return nothing
+        if method.return_type is None:
+            return None
+
+        # Type check the final result with the return type
+        if not ValueHelper.is_value_compatible_with_type(self.final_result, method.return_type):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         return self.final_result
 
     # runs/interprets the passed-in statement until completion and

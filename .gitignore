@@ -1,6 +1,8 @@
 # Personal
 .vscode
 dev
+# Allow for zipping source code
+interpreterv2.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
