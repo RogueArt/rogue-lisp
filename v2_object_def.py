@@ -49,6 +49,15 @@ class ObjectDefinition:
         # Imagine if we do call1 -> call2 -> call 3
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
+
+        # Void methods must always return nothing
+        if method.return_type is None:
+            return None
+
+        # Type check the final result with the return type
+        if not ValueHelper.is_value_compatible_with_type(self.final_result, method.return_type):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         return self.final_result
 
     # runs/interprets the passed-in statement until completion and
@@ -432,7 +441,8 @@ class ValueHelper():
         elif value is False:
             return InterpreterBase.FALSE_DEF
         elif value is None or isinstance(value, ObjectDefinition):
-            return InterpreterBase.NULL_DEF
+            # return InterpreterBase.NULL_DEF
+            return "None"
         elif isinstance(value, str):
             return value  # '"' + value + '"'
         elif isinstance(value, int):
