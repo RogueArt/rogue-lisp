@@ -9,9 +9,10 @@ from v2_object_def import *
 
 import copy
 class ObjectDefinition:
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, None|int|bool|str]):
         self.interpreter = interpreter
         self.interpreter_base = interpreter_base
+        self.class_name = class_name
         self.methods = methods
         self.fields = fields
         self.terminated = False
@@ -126,7 +127,9 @@ class ObjectDefinition:
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
     def update_variable_with_name(self, name: str, new_val: None | int | str | bool) -> None:
-        # TO-DO: Add variable type checking
+        # Type check to see if we can update the v ariable
+        if not ValueHelper.is_value_compatible_with_type(new_val, self.get_variable_with_name(name)['type']):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
         # Check in order of increasing scope
         # 1. Check the parameter stack
@@ -413,18 +416,15 @@ class ValueHelper():
         return isinstance(value, str) or isinstance(value, int) or isinstance(value, bool)
     
     # <===================== STATIC TYPE CHECKING ========================>
-    def does_type_declaration_match_value(parsed_type: type, value: int|bool|str|None|ObjectDefinition) -> bool:
+    def is_value_compatible_with_type(value: int|bool|str|None|ObjectDefinition, parsed_type: type) -> bool:
         # Case 1 - Primitives
         if ValueHelper.is_primitive_type(parsed_type):
             return type(value) == parsed_type
 
         # Case 2 - Object definition
         # TO-DO: Handle derived objects
-        # parsed_type will give us Person
-        # if we have None, that's chill
-        # if we get Parse, that's also fine
         if isinstance(parsed_type, ClassDefinition):
-            return value is None or isinstance(value, parsed_type)
+            return value is None or parsed_type.name == value.class_name
 
         # Case 3
         return False
@@ -461,6 +461,6 @@ class ClassDefinition:
 
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, 
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.name,
                                copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
