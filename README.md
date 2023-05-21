@@ -1,11 +1,12 @@
-# CS 131 Spring 2023: Project Spec
+# CS 131 Spring 2023: Project Description
 
-## Current Status
+## Project Status (for TAs)
+### Project Status (v2)
+- No known issues / everything works correctly! ("all good!")
+### Project Status (v1)
 
 - No known issues / everything works correctly ("all good!")
 - All local tests (49/49) and autograder tests passing for V1
-- V2 is WIP
-
 ## About
 
 Hey there! This is a template repository that contains the necessary boilerplate
@@ -13,6 +14,7 @@ for [CS 131](https://ucla-cs-131.github.io/spring-23/)'s quarter-long project:
 making an interpreter. The project specs are as follows:
 
 1. [Project 1 Spec](https://docs.google.com/document/d/1pPQ2qZKbbsbZGBSwvuy1Ir-NZLPMgVt95WPQuI5aPho)
+2. [Project 2 Spec](https://docs.google.com/document/d/1simlDMO0TK-YNDPYjkuU1C3fcaBpbIVYRaKD1pdqJj8)
 
 There are three stages to the project; students are currently at the first.
 Thus, this folder contains the necessary bootstrapping code:
