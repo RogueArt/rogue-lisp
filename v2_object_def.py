@@ -7,16 +7,17 @@ from bparser import BParser
 from intbase import InterpreterBase
 from v2_constants import *
 from v2_method_def import MethodDefinition
-from v2_value_def import ValueHelper, Value
+from v2_value_def import ValueHelper, Value, Variable
 
 BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
 
 import copy
 class ObjectDefinition:
-    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
+    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, class_def: 'ClassDefinition', methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
         self.interpreter: Interpreter = interpreter
         self.interpreter_base: InterpreterBase = interpreter_base
         self.class_name: str = class_name
+        self.class_def: 'ClassDefinition' = class_def
         self.methods: Dict[str, MethodDefinition]  = methods
         self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
@@ -25,7 +26,9 @@ class ObjectDefinition:
         self.ancestor_objs: List[ObjectDefinition] = []
 
         # Always add the self reference value
-        self.fields[InterpreterBase.ME_DEF] = Value(self, self)
+        self.fields[InterpreterBase.ME_DEF] = Variable(self.interpreter, self.class_name, 'null')
+        # self.update_variable_with_name(InterpreterBase.ME_DEF, Value(self.interpreter, self.class_def, self)
+        self.fields[InterpreterBase.ME_DEF].value().set_value_to_other_checked(interpreter, Value(self.interpreter, self.class_def, self))
 
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
@@ -50,11 +53,11 @@ class ObjectDefinition:
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
         self.terminated = False
+        self.final_result = None
 
         method = self.get_method_with_name(method_name)
-        self.final_result = Value(method.return_type, ValueHelper.get_default_value_for_return_type(method.return_type))
-
         statement = method.get_top_level_statement()
+        
         self.method_stack.append(method)
         self.current_method = self.method_stack[-1]
 
@@ -69,6 +72,13 @@ class ObjectDefinition:
         # Imagine if we do call1 -> call2 -> call 3
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
+
+        # If it's a non-void function and the final result is None, THEN we set a default value
+        if self.final_result is None and self.current_method.return_type is not None:
+            self.final_result = Value(self.interpreter, self.current_method.return_type, self.current_method.get_default_value_by_return_type())
+        # If it's a void function, return a (None, None)
+        elif self.current_method.return_type is None:
+            self.final_result = Value(self.interpreter, None, None)
 
         self.method_stack.pop()
         self.current_method = None if len(self.method_stack) == 0 else self.method_stack[-1]
@@ -158,7 +168,7 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return name in self.fields
 
-    def get_variable_with_name(self, name: str) -> BrewinAsPythonValue:
+    def get_variable_with_name(self, name: str) -> Variable:
         # 1. Check local variables first
         if name in self.local_variables:
             return self.local_variables[name]
@@ -170,25 +180,32 @@ class ObjectDefinition:
         # 3. Check field level scope for object
         return self.fields[name] if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-    def update_variable_with_name(self, name: str, new_val: BrewinAsPythonValue) -> None:
-        # Type check to see if we can update the variable
-        variable = self.get_variable_with_name(name)
-        if not ValueHelper.is_value_compatible_with_variable(new_val, variable):
-            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+    def get_value_with_variable_name(self, name: str) -> BrewinAsPythonValue:
+        # 1. Check local variables first
+        if name in self.local_variables:
+            return self.local_variables[name].value()
 
+        # 2. Check parameter level scope for method
+        if name in self.parameters:
+            return self.parameters[name].value()
+
+        # 3. Check field level scope for object
+        return self.fields[name].value() if name in self.fields else self.interpreter_base.error(ErrorType.NAME_ERROR)
+
+    def update_variable_with_name(self, name: str, new_val: Value) -> None:
         # Check in order of increasing scope
         # 1. Check local variables first
         if name in self.local_variables:
-            self.local_variables[name].set_value_to_other(new_val)
+            self.local_variables[name].value().set_value_to_other_checked(self.interpreter, new_val)
             return
 
         # 2. Check the parameter stack
         if name in self.parameters:
-            self.parameters[name].set_value_to_other(new_val)
+            self.parameters[name].value().set_value_to_other_checked(self.interpreter, new_val)
             return
 
-        # 2. Check the fields of the object
-        self.fields[name].set_value_to_other(new_val)
+        # 3. Check the fields of the object
+        self.fields[name].value().set_value_to_other_checked(self.interpreter, new_val)
 
     # <==== EVALUATION & VALUE HANDLER =========>
     def evaluate_expression(self, expression) -> Value:
@@ -198,12 +215,12 @@ class ObjectDefinition:
         if not isinstance(expression, list):
             # Case 1: Reached a variable
             if self.has_variable_with_name(expression):
-                return self.get_variable_with_name(expression)
+                return self.get_value_with_variable_name(expression)
 
             # Case 2: Reached a const value
-            val = ValueHelper.parse_str_into_python_value(self.interpreter, expression)
-            # TO-DO: Update this to handle all types of error types
-            return Value(ValueHelper.get_type_from_value(val), val)
+            value = ValueHelper.parse_str_into_python_value(self.interpreter, expression)
+            value_type = ValueHelper.get_type_from_value(value)
+            return Value(self.interpreter, value_type, value)
 
         # Case 3: Reached a call statement
         if isinstance(expression, list) and expression[0] == InterpreterBase.CALL_DEF:
@@ -218,20 +235,20 @@ class ObjectDefinition:
             class_def = self.interpreter.find_definition_for_class(field_name)
             val = class_def.instantiate_object()
 
-            return Value(ValueHelper.get_type_from_value(val), val)
+            return Value(self.interpreter, ValueHelper.get_type_from_value(val), val)
 
         # Case 5: Reached a triple -- we need to recurse and evaluaute this binary expression
         if isinstance(expression, list) and len(expression) == 3:
             operator, operand1, operand2 = expression
 
-            evaluated_expr1 = self.evaluate_expression(operand1)
-            evaluated_expr2 = self.evaluate_expression(operand2)
-            type1, operand1 = evaluated_expr1.type(), evaluated_expr1.value()
-            type2, operand2 = evaluated_expr2.type(), evaluated_expr2.value()
+            program_value1 = self.evaluate_expression(operand1)
+            program_value2 = self.evaluate_expression(operand2)
+            type1, operand1 = program_value1.type(), program_value1.value()
+            type2, operand2 = program_value2.type(), program_value2.value()
 
             # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
-            if not ValueHelper.is_value_compatible_with_value(evaluated_expr1, evaluated_expr2):
+            if not program_value1.is_compatible_with_other_value(program_value2):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Case 5b: Operands must be compatible with operator
@@ -241,31 +258,31 @@ class ObjectDefinition:
             # Case 5c: Both are compatible and of the same type, so evaluate them
             match operator:
                 case '+':
-                    return Value(type1, operand1 + operand2)
+                    return Value(self.interpreter, type1, operand1 + operand2)
                 case '-':
-                    return Value(int, operand1 - operand2)
+                    return Value(self.interpreter, int, operand1 - operand2)
                 case '*':
-                    return Value(int, operand1 * operand2)
+                    return Value(self.interpreter, int, operand1 * operand2)
                 case '/':
-                    return Value(int, operand1 // operand2)
+                    return Value(self.interpreter, int, operand1 // operand2)
                 case '%':
-                    return Value(int, operand1 % operand2)
+                    return Value(self.interpreter, int, operand1 % operand2)
                 case '==':
-                    return Value(bool, operand1 == operand2)
+                    return Value(self.interpreter, bool, operand1 == operand2)
                 case '!=':
-                    return Value(bool, operand1 != operand2)
+                    return Value(self.interpreter, bool, operand1 != operand2)
                 case '>':
-                    return Value(bool, operand1 > operand2)
+                    return Value(self.interpreter, bool, operand1 > operand2)
                 case '<':
-                    return Value(bool, operand1 < operand2)
+                    return Value(self.interpreter, bool, operand1 < operand2)
                 case '>=':
-                    return Value(bool, operand1 >= operand2)
+                    return Value(self.interpreter, bool, operand1 >= operand2)
                 case '<=':
-                    return Value(bool, operand1 <= operand2)
+                    return Value(self.interpreter, bool, operand1 <= operand2)
                 case '&':
-                    return Value(bool, operand1 and operand2)
+                    return Value(self.interpreter, bool, operand1 and operand2)
                 case '|':
-                    return Value(bool, operand1 or operand2)
+                    return Value(self.interpreter, bool, operand1 or operand2)
 
         # Case 6: Reached a pair (one operator, one operand) -- we need to recurse and evaluate this unary expression
         if isinstance(expression, list) and len(expression) == 2:
@@ -277,14 +294,13 @@ class ObjectDefinition:
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             if operator == '!':
-                return Value(bool, not operand)
+                return Value(self.interpreter, bool, not operand)
 
         # Case 7: Error - invalid expression format
         raise Exception("Invalid expression format")
 
     # <========= END EXPRESSION HANDLER ============>
     def __execute_print_statement(self, statement) -> None:
-
         formatted_arguments = []
         for arg in statement[1:]:
             val = self.evaluate_expression(arg).value()
@@ -305,13 +321,8 @@ class ObjectDefinition:
             self.interpreter_base.error(ErrorType.NAME_ERROR)
 
         # Evaluate expressions before setting value
-        val = self.evaluate_expression(expression)
-
-        # Throw error if the variable's type doesn't match value
-        if not ValueHelper.is_value_compatible_with_variable(val, self.get_variable_with_name(field_name)):
-            self.interpreter_base.error(ErrorType.TYPE_ERROR)
-
-        self.update_variable_with_name(field_name, val)
+        program_value = self.evaluate_expression(expression)
+        self.update_variable_with_name(field_name, program_value)
         return
 
     def __execute_input_statement(self, statement) -> None:
@@ -324,7 +335,7 @@ class ObjectDefinition:
         else:
             value = input_val
 
-        update_value = Value(ValueHelper.get_type_from_value(value), value)
+        update_value = Value(self.interpreter, ValueHelper.get_type_from_value(value), value)
 
         # Update the variable with the new value
         self.update_variable_with_name(field_name, update_value)
@@ -358,7 +369,7 @@ class ObjectDefinition:
 
         # Call made to a method name that does not exist must generate an error
         if method is None:
-            self.interpreter_base.error(ErrorType.FAULT_ERROR)
+            self.interpreter_base.error(ErrorType.NAME_ERROR)
 
         # Number of parameters does not match the method definition
         if len(param_expressions) != len(method.parameter_names):
@@ -375,14 +386,16 @@ class ObjectDefinition:
             parameter_name = method.parameter_names[index]
             parameter_type = method.parameter_types[index]
 
-            parameter_variable = Value(parameter_type, None)
+            # We use this for type checking purposes only
+            # Perform type checking before setting
+            try:
+                parameter_pseudo_variable = Value(self.interpreter, parameter_type, evaluated_expr.value())
+            except:
+                self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-            # Type check the value with the parameter type before adding to map
-            if not ValueHelper.is_value_compatible_with_variable(evaluated_expr, parameter_variable):
-                self.interpreter_base.error(ErrorType.NAME_ERROR) # TO-DO: Double check error type
-
-            # Add to map
-            parameter_map[parameter_name] = Value(parameter_type, evaluated_expr.value())
+            # Add variable to map
+            parameter_variable = Variable(self.interpreter, '', '', type_override=parameter_type, program_value_override=parameter_pseudo_variable)
+            parameter_map[parameter_name] = parameter_variable
 
         # TO-DO: Move this code to another region?
         # Account for case in which we call another function with local variable
@@ -437,10 +450,9 @@ class ObjectDefinition:
 
         # Any expression evaluated in return statement is the "final" value of method call
         self.final_result = self.evaluate_expression(statement[1])
-        default_value = Value(self.current_method.return_type, ValueHelper.get_default_value_for_return_type(self.current_method.return_type))
 
         # Type check the final result with the return type
-        if not ValueHelper.is_value_compatible_with_value(self.final_result, default_value):
+        if not self.current_method.check_return_type_compatibility(self.final_result):
             self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
         return

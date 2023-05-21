@@ -8,7 +8,7 @@ from v2_constants import *
 from v2_class_def import ClassDefinition
 from v2_object_def import ObjectDefinition
 from v2_method_def import MethodDefinition
-from v2_value_def import ValueHelper, Value
+from v2_value_def import ValueHelper, Value, Variable
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -104,26 +104,12 @@ class Interpreter(InterpreterBase):
                 field_name: str = statement[2]
                 value_str: str = statement[3]
 
-                # TO-DO: Refactor this into a helper class
                 # Duplicate field names are not allowed
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)
 
-                # Read the type hint and value, verify that they match
-                value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(self, value_str)
-                field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
-                
-                # We must compare the variable with the value we just parsed
-                # Any arbitrary value for the variable
-                field_variable = Value(field_type,  None)
-                field_value = Value(ValueHelper.get_type_from_value(value), value)
-                if not ValueHelper.is_value_compatible_with_variable(field_value, field_variable):
-                    self.interpreter_base.error(ErrorType.TYPE_ERROR)
-                
-                # TO-DO: Add variable types
-                # Fields map stores <name:Value> pairs
-                fields[field_name] = Value(field_type, value)
-
+                # Fields map stores <name:Variable> pairs
+                fields[field_name] = Variable(self, field_type_str, value_str)
         return fields
 
     def find_definition_for_class(self, class_name: str):
@@ -147,7 +133,7 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     skip_tests = []  # , 'set_fields'
     # skip_tests = ['field_and_method_types']
-    run_tests = ['inheritance_chain_test']
+    run_tests = ['call_with_invalid_argument_types']
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
@@ -155,19 +141,19 @@ if __name__ == "__main__":
             continue
 
         if (len(run_tests) > 0 and program_name in run_tests) or len(run_tests) == 0:
-            try:
+            # try:
                 print(GREEN + f"Running test #{count+1} {program_name}:" + RESET)
                 interpreter = Interpreter()
                 interpreter.run(program)
                 print(GREEN + f"Finished testing {program_name}\n\n" + RESET)
-            except RuntimeError as e:
-                if e.args[0] == 'ErrorType.TYPE_ERROR':
-                    print("Code exited with ErrorType.TYPE_ERROR")
-                elif e.args[0] == 'ErrorType.NAME_ERROR':
-                    print("Code exited with ErrorType.NAME_ERROR")
-                elif e.args[0] == 'ErrorType.SYNTAX_ERROR':
-                    print("Code exited with ErrorType.SYNTAX_ERROR")
-                elif e.args[0] == 'ErrorType.FAULT_ERROR':
-                    print("Code exited with ErrorType.FAULT_ERROR")
-                else:
-                    raise e
+            # except RuntimeError as e:
+            #     if e.args[0] == 'ErrorType.TYPE_ERROR':
+            #         print("Code exited with ErrorType.TYPE_ERROR")
+            #     elif e.args[0] == 'ErrorType.NAME_ERROR':
+            #         print("Code exited with ErrorType.NAME_ERROR")
+            #     elif e.args[0] == 'ErrorType.SYNTAX_ERROR':
+            #         print("Code exited with ErrorType.SYNTAX_ERROR")
+            #     elif e.args[0] == 'ErrorType.FAULT_ERROR':
+            #         print("Code exited with ErrorType.FAULT_ERROR")
+            #     else:
+            #         raise e

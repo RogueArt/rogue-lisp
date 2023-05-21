@@ -28,7 +28,7 @@ class ClassDefinition:
 
     def create_obj(self):
         from v2_object_def import ObjectDefinition
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.class_name,
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.class_name, self,
                                copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
 
