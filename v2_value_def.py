@@ -1,6 +1,10 @@
 from intbase import InterpreterBase, ErrorType
 from v2_constants import *
 
+
+# TO-DO: Make this implementation more idiomatic
+NOTHING='0c58a8606378b9c71f742fd385c90b99'
+
 class ValueHelper():
     def parse_str_into_python_value(interpreter, value: str) -> BrewinAsPythonValue:
         if value == InterpreterBase.TRUE_DEF:
@@ -25,7 +29,7 @@ class ValueHelper():
         elif value is False:
             return InterpreterBase.FALSE_DEF
         elif value is None or isinstance(value, ObjectDefinition):
-            return InterpreterBase.NULL_DEF
+            return "None"
         elif isinstance(value, str):
             return value  # '"' + value + '"'
         elif isinstance(value, int):
@@ -97,8 +101,10 @@ class ValueHelper():
             variable_name: str = param_triple[1]
             value = ValueHelper.parse_str_into_python_value(interpreter, param_triple[2])
             
+            field_value = Value(ValueHelper.get_type_from_value(value), value)
+
             # Type check the value with the parameter type before adding to map
-            if not ValueHelper.is_value_compatible_with_type(value, return_type):
+            if not ValueHelper.is_value_compatible_with_variable(field_value, Value(return_type, None)):
                 interpreter.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Check that the variable hasn't already been added yet
@@ -106,25 +112,45 @@ class ValueHelper():
                 interpreter.interpreter_base.error(ErrorType.NAME_ERROR)
 
             # Add to map
-            local_variables[variable_name] = { 'type': return_type, 'value': value }
+            local_variables[variable_name] = Value(return_type, value)
 
         return local_variables
     
     # <===================== STATIC TYPE CHECKING ========================>
-
-    def is_value_compatible_with_type(value: BrewinAsPythonValue, parsed_type: type) -> bool:
+    def is_value_compatible_with_variable(value, variable) -> bool:
         from v2_class_def import ClassDefinition
 
-        # Case 1 - Primitives
-        if ValueHelper.is_primitive_type(parsed_type):
-            return type(value) == parsed_type
+        # Case 1: Primitives
+        if variable.type() in [int, str, bool]:
+            return value.type() is variable.type()
 
-        # Case 2 - Object definition
+        # Case 2: Object definition
         # TO-DO: Handle derived objects
-        if isinstance(parsed_type, ClassDefinition):
-            return value is None or parsed_type.name == value.class_name
+        if isinstance(variable.type(), ClassDefinition):
+            return value.value() is None or variable.type().class_name == value.type().class_name
 
-        # Case 3
+        # Case 3: Void variable
+        if variable.type() is None:
+            return value.value() is None
+        
+        return False
+    
+    def is_value_compatible_with_value(value1, value2) -> bool:
+        from v2_object_def import ObjectDefinition
+        from v2_class_def import ClassDefinition
+
+        # Case 1: Primitives
+        if value1.type() in [int, str, bool] or value2.type() in [int, str, bool]:
+            return value1.type() is value2.type()
+
+        # Case 2: Object definition
+        # TO-DO: Handle derived objects
+        if isinstance(value1.type(), ObjectDefinition) or isinstance(value2.type(), ObjectDefinition) or isinstance(value1.type(), ClassDefinition) or isinstance(value2.type(), ClassDefinition):
+            # Handle an unbound null - comparison to with any type is allowed
+            if value1.type() == NOTHING or value2.type() == NOTHING:
+                return True
+            return value1.type().class_name == value2.type().class_name
+        
         return False
 
     def is_primitive_type(expected_type) -> bool:
@@ -157,3 +183,42 @@ class ValueHelper():
         # TO-DO: Check the case where nothing is returned vs null object
         else:
             return None
+        
+    def get_type_from_value(value: BrewinAsPythonValue) -> type:
+        from v2_object_def import ObjectDefinition
+
+        if isinstance(value, bool):
+            return bool
+        elif isinstance(value, str):
+            return str
+        elif isinstance(value, int):
+            return int
+        elif isinstance(value, ObjectDefinition):
+            return value
+        # Edge-case: encountered null with no type hint,
+        # then it's a generic ObjectDefinition until more info
+        elif value is None:
+            return NOTHING
+        # TO-DO: Remove this
+        else:
+            raise ValueError('Unsupported value type: {}'.format(type(value)))
+
+class Value:
+    """A representation for a value that contains a type tag."""
+
+    def __init__(self, value_type, value=None):
+        self.__type = value_type
+        self.__value = value
+
+    def type(self):
+        return self.__type
+
+    def value(self):
+        return self.__value
+
+    def set(self, other):
+        self.__type = other.type()
+        self.__value = other.value()
+
+    def set_value_to_other(self, other):
+        self.__value = other.value()

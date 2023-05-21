@@ -8,7 +8,7 @@ from v2_constants import *
 from v2_class_def import ClassDefinition
 from v2_object_def import ObjectDefinition
 from v2_method_def import MethodDefinition
-from v2_value_def import ValueHelper
+from v2_value_def import ValueHelper, Value
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -104,14 +104,14 @@ class Interpreter(InterpreterBase):
                 
                 # We must compare the variable with the value we just parsed
                 # Any arbitrary value for the variable
-                field_variable = { 'type': field_type, 'value': None }
-                field_value = { 'type': ValueHelper.get_type_from_value(value), 'value': value }
+                field_variable = Value(field_type,  None)
+                field_value = Value(ValueHelper.get_type_from_value(value), value)
                 if not ValueHelper.is_value_compatible_with_variable(field_value, field_variable):
                     self.interpreter_base.error(ErrorType.TYPE_ERROR)
                 
                 # TO-DO: Add variable types
                 # Fields map stores <name:Value> pairs
-                fields[field_name] = { 'type': field_type, 'value': value }
+                fields[field_name] = Value(field_type, value)
 
         return fields
 
