@@ -490,6 +490,9 @@ class ObjectDefinition:
         if not self.current_method.check_return_type_compatibility(self.final_result):
             self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
+        # Update the result to match the function type 
+        self.final_result.set_type(self.current_method.return_type)
+
         return
 
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:
