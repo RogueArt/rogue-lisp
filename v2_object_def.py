@@ -247,7 +247,7 @@ class ObjectDefinition:
 
             # Case 5a: Operands must be of the same type
             # Except in the case of a None and Object comparison
-            if not program_value1.is_compatible_with_other_value(program_value2):
+            if not program_value1.is_compatible_with_other_value(program_value2) and not program_value2.is_compatible_with_other_value(program_value1):
                 self.interpreter_base.error(ErrorType.TYPE_ERROR)
 
             # Case 5b: Operands must be compatible with operator

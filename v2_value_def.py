@@ -289,7 +289,7 @@ class Value:
         # Case 2: Both are object references
         # TO-DO: Update this for polymorphism
         if isinstance(self.get_variable_type(), ClassDefinition) and isinstance(other_value.get_variable_type(), ClassDefinition):
-            return self.get_variable_type().class_name == other_value.get_variable_type().class_name
+            return self.get_variable_type().is_other_class_def_same_or_derived_class(other_value.get_variable_type())
         
         # Case 3: At least one of them is a dangling null
         if self.get_variable_type() == None or other_value.get_variable_type() == None:
