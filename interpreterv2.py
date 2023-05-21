@@ -104,6 +104,7 @@ class Interpreter(InterpreterBase):
                 field_name: str = statement[2]
                 value_str: str = statement[3]
 
+                # TO-DO: Refactor this into a helper class
                 # Duplicate field names are not allowed
                 if field_name in fields:
                     self.interpreter_base.error(ErrorType.NAME_ERROR)

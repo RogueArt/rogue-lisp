@@ -22,7 +22,7 @@ class ObjectDefinition:
         self.terminated = False
 
         # Polymorphism / inheritance
-        self.ancestor_objs = []
+        self.ancestor_objs: List[ObjectDefinition] = []
 
         # Always add the self reference value
         self.fields[InterpreterBase.ME_DEF] = Value(self, self)
@@ -39,6 +39,9 @@ class ObjectDefinition:
     # <========== POLYMORPHISM & INHERITANCE ===========>
     def set_ancestor_objs(self, ancestor_objs: List[ObjectDefinition]) -> None:
         self.ancestor_objs = ancestor_objs
+
+    def append_ancestor_objs(self, ancestor_objs: List[ObjectDefinition]) -> None:
+        self.ancestor_objs += ancestor_objs
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
