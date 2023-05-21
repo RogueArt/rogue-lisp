@@ -340,23 +340,50 @@ class ObjectDefinition:
         # Update the variable with the new value
         self.update_variable_with_name(field_name, update_value)
         return
+    
+    def has_method_with_name_and_args(self, obj: ObjectDefinition, method_name: str, parameter_types: List[type]):
+        if obj.has_method_with_name(method_name):
+            method = obj.get_method_with_name(method_name)
+            # Length of parameter types must match
+            if len(method.parameter_types) != len(parameter_types):
+                return False
+
+            # Pair up the elements and compare
+            for method_type, param_type in zip(method.parameter_types, parameter_types):
+                if method_type != param_type:
+                    continue
+
+            # If length and types match, then we found our method & object
+            return True
+        return False
+
+    def get_parameter_types_from_expression(self, param_expressions: List[str]) -> List[type]:
+        parameter_types = list(map(lambda expr: self.evaluate_expression(expr).type(), param_expressions))
+        return parameter_types
 
     def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
         
         # Get object based on if it's the current or some other object
         # TO-DO: Refactor this so it's just self.evaluate_expression()
-        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name).value()
+        obj = self if (obj_name == InterpreterBase.ME_DEF or obj_name == InterpreterBase.SUPER_DEF) else self.evaluate_expression(obj_name).value()
 
         # Call made to object reference of null must generate an error
         if obj is None:
             self.interpreter_base.error(ErrorType.FAULT_ERROR)
 
-        # TO-DO: Move this code block into a function
-        # Get the method from object
+        # Search for a matching method given number of arguments and types
+        # TO-DO: See if we need to do any particular error handling here
         method = None
-        if obj.has_method_with_name(method_name):
-            method = obj.get_method_with_name(method_name)
+        parameter_types = self.get_parameter_types_from_expression(param_expressions)
+        current_obj_and_ancestor_objs = [obj] + obj.ancestor_objs
+
+        # Gather all of the candidates
+        candidates = []
+        for candidate_obj in current_obj_and_ancestor_objs:
+            if candidate_obj.has_method_with_name_and_args(candidate_obj, method_name, parameter_types):
+                candidate_method = obj.get_method_with_name(method_name) 
+                candidates.append((candidate_obj, candidate_method))
 
         # If it doesn't exist, then get it from its ancestors
         # Method call is now being simulated within the ancestor object
