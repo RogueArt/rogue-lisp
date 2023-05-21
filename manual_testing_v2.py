@@ -136,8 +136,8 @@ def get_test_programs():
         ')',
         '(method void print_stuff ((int a) (string b))',
         '(begin',
-        # '(set x "hello")',
-        # '(set y 3)',
+        '(set x "hello")',
+        '(set y 3)',
         '(set x (new person))',
         '(print x " " y " " p)',
         ')',
@@ -168,24 +168,24 @@ def get_test_programs():
 
     # Valid case for calling a method with argument types
     # Expect a type error
-    call_with_invalid_argument_types = [
-    '(class person',
-    '(method void nothing ()',
-    '(return "")',
-    ')',
-    ')',
-    '(class main',
-    '(field int x 10)',
-    '(field string y "xyz")',
-    '(field person p null)',
-    '(method void main ()',
-    '(call me print_stuff y y p)',
-    ')',
-    '(method void print_stuff ((int a) (string b) (person p))',
-    '(print a " " b " " p)', # Note - we aren't expected to print the person object, but do it for testing anyways
-    ')',
-    ')'
-    ]
+    # call_with_invalid_argument_types = [
+    # '(class person',
+    # '(method void nothing ()',
+    # '(return "")',
+    # ')',
+    # ')',
+    # '(class main',
+    # '(field int x 10)',
+    # '(field string y "xyz")',
+    # '(field person p null)',
+    # '(method void main ()',
+    # '(call me print_stuff y y p)',
+    # ')',
+    # '(method void print_stuff ((int a) (string b) (person p))',
+    # '(print a " " b " " p)', # Note - we aren't expected to print the person object, but do it for testing anyways
+    # ')',
+    # ')'
+    # ]
 
     # Test default return types
     call_with_invalid_argument_types = [
@@ -448,25 +448,52 @@ def get_test_programs():
     )
     """.split('\n')
 
+    # Same as above case - except we now make method calls FROM the ancestor object itself
+    # Testing strategy:
+    # Same as #1 and #2 for above
+    # 3. Checks that we can call methods on the student class that are tied to person class 
+    basic_inheritance_from_ancestor_call = """
+       (class person
+      (field string name "anonymous")
+      (method void set_name ((string n)) (set name n))
+      (method string get_name () (return name))
+      (method void say_something () (print name " says hi"))
+    )
 
-    """.split('\n')
+    (class student inherits person
+      (field int student_id 0)
+      (method void set_id ((int id)) (set student_id id))
+      (method void say_something ()
+        (begin
+        (print "first")
+        (print (call me get_name) " says hi")
+        )
+      )
+    )
+
+    (class main
+      (field student s null)
+      (method void main ()
+        (begin
+          (set s (new student))
+          (call s set_name "julin")   # calls person's set_name method
+          (call s set_id 010123456) # calls student's set_id method
+          (call s say_something)	  # calls student's say_something method
+        )
+      )    
+    """
+
+    # Invalid inheritance cases: TO-DO
     
 
     return {
         "field_and_method_types": field_and_method_types,
         "set_valid_field_types": set_valid_field_types,
 
-        # Exception tests
-        "set_string_on_int_field": set_string_on_int_field,
-        "set_int_on_string_field": set_int_on_string_field,
-        "set_object_on_primitive_field": set_object_on_primitive_field,
-
         "call_with_valid_argument_types": call_with_valid_argument_types,
-        "call_with_invalid_argument_types": call_with_invalid_argument_types,
         "call_with_valid_default_types": call_with_valid_default_types,
 
         "valid_local_variables_with_let": valid_local_variables_with_let,
-        'invalid_local_variable_access_with_let': invalid_local_variable_access_with_let,
         'let_with_shadowing_test': let_with_shadowing_test,
         'let_with_nested_shadowing_test': let_with_nested_shadowing_test,
         'let_with_nested_shadowing_test_multiple_class': let_with_nested_shadowing_test_multiple_class,
@@ -475,6 +502,16 @@ def get_test_programs():
         # 'basic_inheritance': basic_inheritance,
         'inheritance_chain_test': inheritance_chain_test,
         'inheritance_chain_test_with_instantiation': inheritance_chain_test_with_instantiation,
+        'basic_inheritance_no_super': basic_inheritance_no_super,
+        # 'basic_inheritance_from_ancestor_call': basic_inheritance_from_ancestor_call,
+
+  
+        # Exception tests
+        "call_with_invalid_argument_types": call_with_invalid_argument_types,
+        'invalid_local_variable_access_with_let': invalid_local_variable_access_with_let,
+        "set_string_on_int_field": set_string_on_int_field,
+        "set_int_on_string_field": set_int_on_string_field,
+        "set_object_on_primitive_field": set_object_on_primitive_field,
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
