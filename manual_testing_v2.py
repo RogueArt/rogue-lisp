@@ -354,6 +354,36 @@ def get_test_programs():
   ')'
 ]
     
+    # No method calls - allows us to check if inheritance chains are being built correctly
+    inheritance_chain_test = """
+# Machine
+# Animal -> Person 
+#		|        | -> Nerd
+#		|        | -> Student
+#       | -> Dog -> GoldenRetriever
+
+(class machine (method void main () (return)))
+
+(class animal (method void main () (return)))
+  (class person inherits animal (method void main () (return)))
+    (class nerd inherits person (method void main () (return)))
+    (class student inherits person (method void main () (return)))
+  (class dog inherits animal (method void main () (return)))
+      (class goldenretriever inherits dog (method void main () (return)))
+
+(class main
+  (method void main ()
+    (begin
+      (print "Sanity check for inheritance chains")
+    )
+  )
+)
+
+
+
+
+    """.split('\n')
+    
     basic_inheritance = """
     (class person
   (field string name "anonymous")
@@ -408,7 +438,8 @@ def get_test_programs():
         'let_with_nested_shadowing_test_multiple_class': let_with_nested_shadowing_test_multiple_class,
         'let_with_nothing': let_with_nothing,
 
-        'basic_inheritance': basic_inheritance
+        'basic_inheritance': basic_inheritance,
+        'inheritance_chain_test': inheritance_chain_test
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level
