@@ -32,6 +32,35 @@ class ClassDefinition:
                                copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
 
+    def __get_lowest_common_ancestor(self, other_class_def):
+        base_ancestors = [self] + self.ancestor_class_defs
+        other_ancestors = [other_class_def] + other_class_def.ancestor_class_defs
+
+        # Gets LCA between the two lists
+        for base_ancestor in base_ancestors:
+            for other_ancestor in other_ancestors:
+                if base_ancestor.class_name == other_ancestor.class_name:
+                    return base_ancestor
+
+    def is_other_class_def_same_or_derived_class(self, other_class_def):
+        # Check if both classes are the same
+        lhs_and_rhs_are_same = self.class_name == other_class_def.class_name
+        if lhs_and_rhs_are_same:
+            return True
+        
+        # Check if base or derived classes now
+        # No LCA - then these classes do not share ancestors
+        lowest_common_ancestor = self.__get_lowest_common_ancestor(other_class_def)
+        if lowest_common_ancestor is None:
+            return False
+
+        # Two rules must stand for the RHS to be more derived than LHS
+        # 1. The LHS must be the LCA - if it's not, then this is a sibling class
+        # 2. The RHS must not be the LCA while LHS is not LCA - this implies that that would be the more base class
+        lhs_is_lca = lowest_common_ancestor.class_name == self.class_name
+        rhs_is_not_lca = lowest_common_ancestor.class_name != other_class_def.class_name
+        return lhs_and_rhs_are_same or (lhs_is_lca and rhs_is_not_lca)
+
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
         from v2_object_def import ObjectDefinition
