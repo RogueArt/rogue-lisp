@@ -337,6 +337,10 @@ class Value:
 
     def value(self):
         return self.__value
+    
+    # Deprecate this method
+    def set_type(self, other_type):
+        self.__value_type = other_type
 
     def set(self, other):
         self.__type = other.type()
