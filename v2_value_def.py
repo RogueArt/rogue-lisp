@@ -3,7 +3,8 @@ from v2_constants import *
 
 
 # TO-DO: Make this implementation more idiomatic
-NOTHING='0c58a8606378b9c71f742fd385c90b99'
+NOTHING='None'
+NOTHING_TYPE='0c58a8606378b9c71f742fd385c90b99123213'
 
 class ValueHelper():
     def parse_str_into_python_value(interpreter, value: str) -> BrewinAsPythonValue:
@@ -129,12 +130,9 @@ class ValueHelper():
         if isinstance(variable.type(), ClassDefinition):
             return value.value() is None or variable.type().class_name == value.type().class_name
 
-        # Case 3: Void variable
-        if variable.type() is None:
-            return value.value() is None
-        
         return False
     
+    # TO-DO: Refactor the logic of this so it's more clear
     def is_value_compatible_with_value(value1, value2) -> bool:
         from v2_object_def import ObjectDefinition
         from v2_class_def import ClassDefinition
@@ -147,10 +145,20 @@ class ValueHelper():
         # TO-DO: Handle derived objects
         if isinstance(value1.type(), ObjectDefinition) or isinstance(value2.type(), ObjectDefinition) or isinstance(value1.type(), ClassDefinition) or isinstance(value2.type(), ClassDefinition):
             # Handle an unbound null - comparison to with any type is allowed
-            if value1.type() == NOTHING or value2.type() == NOTHING:
+            # In this case, we are guaranteed that only one of them is a null type
+            if value1.type() == None or value2.type() == None:
                 return True
             return value1.type().class_name == value2.type().class_name
-        
+        # Case 2d - what if both are nulls?
+        if value1.type() == None and value2.type() == None:
+            return True
+
+        # Case 3: Void return from function
+        if value1.type() is NOTHING_TYPE:
+            return value2.value() == NOTHING
+        if value2.type() is NOTHING_TYPE:
+            return value1.type() == NOTHING
+
         return False
 
     def is_primitive_type(expected_type) -> bool:
@@ -169,7 +177,7 @@ class ValueHelper():
 
     def get_return_type_from_type_str(interpreter, type_str):
         if type_str == 'void':
-            return None
+            return NOTHING_TYPE
         else:
             return ValueHelper.get_variable_type_from_type_str(interpreter, type_str)
 
@@ -182,7 +190,7 @@ class ValueHelper():
             return False
         # TO-DO: Check the case where nothing is returned vs null object
         else:
-            return None
+            return NOTHING
         
     def get_type_from_value(value: BrewinAsPythonValue) -> type:
         from v2_object_def import ObjectDefinition
@@ -198,7 +206,7 @@ class ValueHelper():
         # Edge-case: encountered null with no type hint,
         # then it's a generic ObjectDefinition until more info
         elif value is None:
-            return NOTHING
+            return None
         # TO-DO: Remove this
         else:
             raise ValueError('Unsupported value type: {}'.format(type(value)))
