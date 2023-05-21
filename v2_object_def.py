@@ -7,7 +7,7 @@ from bparser import BParser
 from intbase import InterpreterBase
 from v2_constants import *
 from v2_method_def import MethodDefinition
-from v2_value_def import ValueHelper
+from v2_value_def import ValueHelper, Value
 
 BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
 
@@ -30,6 +30,9 @@ class ObjectDefinition:
         self.local_variables_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.local_variables = self.local_variables_stack[-1]
 
+        self.method_stack = []
+        self.current_method = None
+
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
     def call_method(self, method_name: str, parameters_map: Dict[str, BrewinAsPythonValue]):
@@ -37,12 +40,14 @@ class ObjectDefinition:
         self.parameter_stack.append(parameters_map)
         self.parameters = self.parameter_stack[-1]
         self.terminated = False
-        self.final_result = None
 
         method = self.get_method_with_name(method_name)
         self.final_result = Value(method.return_type, ValueHelper.get_default_value_for_return_type(method.return_type))
-            method.return_type)
+
         statement = method.get_top_level_statement()
+        self.method_stack.append(method)
+        self.current_method = self.method_stack[-1]
+
         self.__run_statement(statement)
 
         # Reset the conditions
@@ -55,13 +60,8 @@ class ObjectDefinition:
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
 
-        # Void methods must always return nothing
-        if method.return_type is None:
-            return None
-
-        # Type check the final result with the return type
-        if not ValueHelper.is_value_compatible_with_type(self.final_result, method.return_type):
-            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+        self.method_stack.pop()
+        self.current_method = None if len(self.method_stack) == 0 else self.method_stack[-1]
 
         return self.final_result
 
@@ -320,6 +320,11 @@ class ObjectDefinition:
 
     def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
+        
+        # TO-DO: Move this code to another region?
+        # Account for case in which we call another function with local variable
+        self.local_variables_stack.append({})
+        self.local_variables = self.local_variables_stack[-1]
 
         # Get object based on if it's the current or some other object
         obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(
@@ -363,10 +368,15 @@ class ObjectDefinition:
         # Run the method on the object
         # To-DO: Why am I doing self.result here? Why not just result?
         self.result = obj.call_method(method_name, parameter_map)
+
+        # TO-DO: Move this code to another region?
+        self.local_variables_stack.pop()
+        self.local_variables = self.local_variables_stack[-1]
+
         return self.result
 
     def __execute_while_statement(self, statement) -> None:
-        should_execute = self.evaluate_expression(statement[1])
+        should_execute = self.evaluate_expression(statement[1]).value()
 
         # Should always evaluate to a boolean condition
         if not isinstance(should_execute, bool):
@@ -379,7 +389,7 @@ class ObjectDefinition:
         return
 
     def __execute_if_statement(self, statement) -> BrewinAsPythonValue:
-        should_execute = self.evaluate_expression(statement[1])
+        should_execute = self.evaluate_expression(statement[1]).value()
 
         # Should always evaluate to a boolean condition
         if not isinstance(should_execute, bool):
