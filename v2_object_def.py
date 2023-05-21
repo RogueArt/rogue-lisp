@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Union, Annotated
+from typing import List, Dict, Union, Annotated, Tuple
 from intbase import InterpreterBase, ErrorType
 
 from bparser import BParser
@@ -27,7 +27,6 @@ class ObjectDefinition:
 
         # Always add the self reference value
         self.fields[InterpreterBase.ME_DEF] = Variable(self.interpreter, self.class_name, 'null')
-        # self.update_variable_with_name(InterpreterBase.ME_DEF, Value(self.interpreter, self.class_def, self)
         self.fields[InterpreterBase.ME_DEF].value().set_value_to_other_checked(interpreter, Value(self.interpreter, self.class_def, self))
 
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
@@ -361,6 +360,34 @@ class ObjectDefinition:
         parameter_types = list(map(lambda expr: self.evaluate_expression(expr).type(), param_expressions))
         return parameter_types
 
+    # TO-DO: Maybe rename this to something better?
+    # TO-DO: Make this into a dictionary so it doesn't rely on ordering?
+    def get_closest_matching_method_and_obj(self, starting_obj: ObjectDefinition, obj_name: str, method_name: str, param_expressions: List[type]) -> Tuple[ObjectDefinition|None, MethodDefinition|None]:
+        # Search for a matching method given number of arguments and types
+        parameter_types = self.get_parameter_types_from_expression(param_expressions)
+        current_obj_and_ancestor_objs = [starting_obj] + starting_obj.ancestor_objs
+
+        # Gather all of the method candidates
+        candidates = []
+        for candidate_obj in current_obj_and_ancestor_objs:
+            if candidate_obj.has_method_with_name_and_args(candidate_obj, method_name, parameter_types):
+                candidate_method = candidate_obj.get_method_with_name(method_name) 
+                candidates.append((candidate_obj, candidate_method))
+
+        # If the object name was "super", pick the first one whose candidate object is not the current object.
+        if obj_name == InterpreterBase.SUPER_DEF:
+            for candidate_obj, candidate_method in candidates:
+                if candidate_obj != starting_obj:
+                    return (candidate_obj, candidate_method)
+
+        # Otherwise, pick the first candidate in this list
+        if candidates:
+            return candidates[0]
+        
+        # No matching methods or objects
+        return (None, None)
+
+
     def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
         
@@ -370,30 +397,11 @@ class ObjectDefinition:
 
         # Call made to object reference of null must generate an error
         if obj is None:
-            self.interpreter_base.error(ErrorType.FAULT_ERROR)
+            self.interpreter_base.error(ErrorType.FAULT_ERROR) 
 
-        # Search for a matching method given number of arguments and types
-        # TO-DO: See if we need to do any particular error handling here
-        method = None
-        parameter_types = self.get_parameter_types_from_expression(param_expressions)
-        current_obj_and_ancestor_objs = [obj] + obj.ancestor_objs
+        obj, method = self.get_closest_matching_method_and_obj(obj, obj_name, method_name, param_expressions)
 
-        # Gather all of the candidates
-        candidates = []
-        for candidate_obj in current_obj_and_ancestor_objs:
-            if candidate_obj.has_method_with_name_and_args(candidate_obj, method_name, parameter_types):
-                candidate_method = obj.get_method_with_name(method_name) 
-                candidates.append((candidate_obj, candidate_method))
-
-        # If it doesn't exist, then get it from its ancestors
-        # Method call is now being simulated within the ancestor object
-        if method is None:
-            for ancestor_obj in obj.ancestor_objs:
-                if ancestor_obj.has_method_with_name(method_name):
-                    method = ancestor_obj.get_method_with_name(method_name)
-                    obj = ancestor_obj
-                    break 
-
+        # TO-DO: Refactor this into a method
         # Call made to a method name that does not exist must generate an error
         if method is None:
             self.interpreter_base.error(ErrorType.NAME_ERROR)
