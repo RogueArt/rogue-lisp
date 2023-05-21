@@ -270,7 +270,7 @@ class Value:
         if isinstance(self.__variable_type, ClassDefinition):
             # Note if value_type is None - then this is a dangling null
             # Note - the RHS of this fails for polymorphism
-            return value_type is None or value_type.class_name == self.__variable_type.class_name
+            return value_type is None or self.__variable_type.is_other_class_def_same_or_derived_class(value_type)
 
         # Case 3: Dangling null
         if self.__variable_type is None and value_type is None:
