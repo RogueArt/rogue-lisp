@@ -321,11 +321,6 @@ class ObjectDefinition:
     def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
         
-        # TO-DO: Move this code to another region?
-        # Account for case in which we call another function with local variable
-        self.local_variables_stack.append({})
-        self.local_variables = self.local_variables_stack[-1]
-
         # Get object based on if it's the current or some other object
         obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(
             obj_name).value()
@@ -363,6 +358,11 @@ class ObjectDefinition:
 
             # Add to map
             parameter_map[parameter_name] = Value(parameter_type, evaluated_expr.value())
+
+        # TO-DO: Move this code to another region?
+        # Account for case in which we call another function with local variable
+        self.local_variables_stack.append({})
+        self.local_variables = self.local_variables_stack[-1]
 
         # TO-DO: Add setting parameter values
         # Run the method on the object
