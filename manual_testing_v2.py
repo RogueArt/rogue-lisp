@@ -354,6 +354,65 @@ def get_test_programs():
   ')'
 ]
     
+    # No method calls - allows us to check if inheritance chains are being built correctly
+    inheritance_chain_test = """
+# Machine
+# Animal -> Person 
+#		|        | -> Nerd
+#		|        | -> Student
+#       | -> Dog -> GoldenRetriever
+
+(class machine (method void main () (return)))
+
+(class animal (method void main () (return)))
+  (class person inherits animal (method void main () (return)))
+    (class nerd inherits person (method void main () (return)))
+    (class student inherits person (method void main () (return)))
+  (class dog inherits animal (method void main () (return)))
+      (class goldenretriever inherits dog (method void main () (return)))
+        (class golden_puppy inherits goldenretriever (method void main () (return)))
+
+(class main
+  (method void main ()
+    (begin
+      (print "Sanity check for inheritance chains - no output/calls")
+    )
+  )
+)
+    """.split('\n')
+    
+    basic_inheritance = """
+    (class person
+  (field string name "anonymous")
+  (method void set_name ((string n)) (set name n))
+  (method void say_something () (print name " says hi"))
+)
+
+(class student inherits person
+  (field int student_id 0)
+  (method void set_id ((int id)) (set student_id id))
+  (method void say_something ()
+    (begin
+     (print "first")
+     (call super say_something)  # calls person's say_something method
+     (print "second")
+    )
+  )
+)
+
+(class main
+  (field student s null)
+  (method void main ()
+    (begin
+      (set s (new student))
+      (call s set_name "julin")   # calls person's set_name method
+(call s set_id 010123456) # calls student's set_id method
+      (call s say_something)	  # calls student's say_something method
+    )
+  )
+)
+
+    """.split('\n')
     
 
     return {
@@ -374,7 +433,10 @@ def get_test_programs():
         'let_with_shadowing_test': let_with_shadowing_test,
         'let_with_nested_shadowing_test': let_with_nested_shadowing_test,
         'let_with_nested_shadowing_test_multiple_class': let_with_nested_shadowing_test_multiple_class,
-        'let_with_nothing': let_with_nothing
+        'let_with_nothing': let_with_nothing,
+
+        'basic_inheritance': basic_inheritance,
+        'inheritance_chain_test': inheritance_chain_test
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level

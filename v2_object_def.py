@@ -408,7 +408,6 @@ class ObjectDefinition:
         # Get the final return value
         if len(statement) == 1:
             return
-            # self.final_result = None
             # return None
 
         # Any expression evaluated in return statement is the "final" value of method call
