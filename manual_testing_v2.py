@@ -553,7 +553,46 @@ def get_test_programs():
     """.split()
 
     # Invalid inheritance cases: TO-DO
-    
+    super2_modified = """
+    (class shape
+      (method void id ()
+        (print "shape")
+      )
+      (method void get_id ()
+        (call me id)
+      )
+    )
+
+    (class rectangle inherits shape
+      (method void id ()
+        (print "rectangle")
+      )
+      (method void get_super_id ()
+        (call super id)
+      )
+    )
+
+    (class square inherits rectangle
+      (method void id ()
+        (print "square")
+      )
+    )
+
+    (class main
+      (field rectangle r1 null)
+      (field square s1 null)
+      (method void main ()
+        (begin
+          (set r1 (new rectangle))
+          (set s1 (new square))
+          (call r1 get_id)
+          (call s1 get_id)
+          (call r1 get_super_id)
+          (call s1 get_super_id)
+        )
+      )
+    )
+    """.split('\n')
 
     return {
         "field_and_method_types": field_and_method_types,
@@ -572,8 +611,9 @@ def get_test_programs():
         'inheritance_chain_test': inheritance_chain_test,
         'inheritance_chain_test_with_instantiation': inheritance_chain_test_with_instantiation,
         'basic_inheritance_no_super': basic_inheritance_no_super,
+        "method_overloading_test": method_overloading_test,
         # 'basic_inheritance_from_ancestor_call': basic_inheritance_from_ancestor_call,
-
+        "polymorphism_valid_basic_test": polymorphism_valid_basic_test,
   
         # Exception tests
         "call_with_invalid_argument_types": call_with_invalid_argument_types,
@@ -581,6 +621,8 @@ def get_test_programs():
         "set_string_on_int_field": set_string_on_int_field,
         "set_int_on_string_field": set_int_on_string_field,
         "set_object_on_primitive_field": set_object_on_primitive_field,
+        "method_overloading_invalid_test": method_overloading_invalid_test,
+        "super2_modified": super2_modified
     }
 # Deliberately small and obscure name for each easy debugging
 # Will pretty print the array with the given indentation level

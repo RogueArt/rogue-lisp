@@ -26,9 +26,9 @@ class ClassDefinition:
     def get_ancestor_class_defs(self) -> List['ClassDefinition']:
         return self.ancestor_class_defs
 
-    def create_obj(self):
+    def create_obj(self, base_obj):
         from v2_object_def import ObjectDefinition
-        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.class_name, self,
+        obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.class_name, self, base_obj,
                                copy.deepcopy(self.methods), copy.deepcopy(self.fields))
         return obj
 
@@ -82,13 +82,14 @@ class ClassDefinition:
         Each time, we reverse this list (though we don't have to), since it makes it easy for us to do:
         for ancestor in ancestors in Python, without having to remember to reverse iterate the list each time
         """
+        base_obj = self.create_obj(None)
+
         ancestors_objs: List[ObjectDefinition] = []
         for ancestor_class_def in self.ancestor_class_defs[::-1]:
-            ancestor_obj = ancestor_class_def.create_obj()
+            ancestor_obj = ancestor_class_def.create_obj(base_obj)
             ancestor_obj.set_ancestor_objs(copy.copy(ancestors_objs[::-1]))
             ancestors_objs.append(ancestor_obj)
-        
+
         # Create the object with the ancestor list
-        obj = self.create_obj()
-        obj.set_ancestor_objs(ancestors_objs[::-1])
-        return obj
+        base_obj.set_ancestor_objs(ancestors_objs[::-1])
+        return base_obj
