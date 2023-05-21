@@ -8,7 +8,7 @@ $sourceFiles = @(
     "README.md"
 )
 
-$zipFile = "interpreterv2.zip"
+$zipFile = "00-interpreterv2.zip"
 
 if (Test-Path $zipFile) {
     Remove-Item -Path $zipFile -Force

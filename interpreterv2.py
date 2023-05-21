@@ -56,11 +56,11 @@ class Interpreter(InterpreterBase):
             class_name = class_def[1]
 
             # Parse the methods and fields from the object
-            methods = self.__get_methods_for_class(class_def)
-            self.class_definitions[class_name].set_methods(methods)
-
             fields = self.__get_fields_for_class(class_def)
             self.class_definitions[class_name].set_fields(fields)
+            
+            methods = self.__get_methods_for_class(class_def)
+            self.class_definitions[class_name].set_methods(methods)
  
 
     def __get_methods_for_class(self, class_def: list) -> list:

@@ -22,13 +22,16 @@ class ObjectDefinition:
         self.terminated = False
 
         # Always add the self reference value
-        self.fields[InterpreterBase.ME_DEF] = { 'type': class_name, 'value': self }
+        self.fields[InterpreterBase.ME_DEF] = { 'type': self, 'value': self }
 
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
 
         self.local_variables_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.local_variables = self.local_variables_stack[-1]
+
+        self.method_stack = []
+        self.current_method = None
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
@@ -42,6 +45,9 @@ class ObjectDefinition:
         self.final_result = { 'type': method.return_type, 'value': ValueHelper.get_default_value_for_return_type(method.return_type) }
 
         statement = method.get_top_level_statement()
+        self.method_stack.append(method)
+        self.current_method = self.method_stack[-1]
+
         self.__run_statement(statement)
 
         # Reset the conditions
@@ -54,16 +60,22 @@ class ObjectDefinition:
         # If call3 terminates, we'd still want call2 to keep running
         self.terminated = False
 
-        default_value = { 'type': method.return_type, 'value': ValueHelper.get_default_value_for_return_type(method.return_type) }
-        final_value = self.final_result
+        # default_value = { 'type': method.return_type, 'value': ValueHelper.get_default_value_for_return_type(method.return_type) }
+        # final_value = self.final_result
 
-        # Void methods must always return nothing
-        if method.return_type is None:
-            return { 'type': None, 'value': None }
+        # # Void methods must always return nothing
+        # if method.return_type is None:
+        #     # If the value's been modified from the default, then it's an issue
+        #     if final_value['value'] != ValueHelper.get_default_value_for_return_type(method.return_type):
+        #         self.interpreter_base.error(ErrorType.TYPE_ERROR)
+        #     return None
 
-        # Type check the final result with the return type
-        if not ValueHelper.is_value_compatible_with_value(final_value, default_value):
-            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+        # # Type check the final result with the return type
+        # if not ValueHelper.is_value_compatible_with_value(final_value, default_value):
+        #     self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
+        self.method_stack.pop()
+        self.current_method = None if len(self.method_stack) == 0 else self.method_stack[-1]
 
         return self.final_result
 
@@ -314,12 +326,19 @@ class ObjectDefinition:
         else:
             value = input_val
 
+        update_value = { 'type': ValueHelper.get_type_from_value(value), 'value': value }
+
         # Update the variable with the new value
-        self.update_variable_with_name(field_name, value)
+        self.update_variable_with_name(field_name, update_value)
         return
 
     def __execute_call_statement(self, statement) -> BrewinAsPythonValue:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
+        
+        # TO-DO: Move this code to another region?
+        # Account for case in which we call another function with local variable
+        self.local_variables_stack.append({})
+        self.local_variables = self.local_variables_stack[-1]
 
         # Get object based on if it's the current or some other object
         obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(
@@ -340,7 +359,7 @@ class ObjectDefinition:
 
         # Number of parameters does not match the method definition
         if len(param_expressions) != len(method.parameter_names):
-            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+            self.interpreter_base.error(ErrorType.NAME_ERROR) # TO-DO: Double check error type
 
         for index, expression in enumerate(param_expressions):
             # Get the value for each variable name
@@ -356,7 +375,7 @@ class ObjectDefinition:
 
             # Type check the value with the parameter type before adding to map
             if not ValueHelper.is_value_compatible_with_variable(evaluated_expr, parameter_variable):
-                self.interpreter_base.error(ErrorType.TYPE_ERROR)
+                self.interpreter_base.error(ErrorType.NAME_ERROR) # TO-DO: Double check error type
 
             # Add to map
             parameter_map[parameter_name] = {
@@ -366,6 +385,11 @@ class ObjectDefinition:
         # Run the method on the object
         # To-DO: Why am I doing self.result here? Why not just result?
         self.result = obj.call_method(method_name, parameter_map)
+
+        # TO-DO: Move this code to another region?
+        self.local_variables_stack.pop()
+        self.local_variables = self.local_variables_stack[-1]
+
         return self.result
 
     def __execute_while_statement(self, statement) -> None:
@@ -406,6 +430,13 @@ class ObjectDefinition:
 
         # Any expression evaluated in return statement is the "final" value of method call
         self.final_result = self.evaluate_expression(statement[1])
+
+        default_value = { 'type': self.current_method.return_type, 'value': ValueHelper.get_default_value_for_return_type(self.current_method.return_type) }
+
+        # Type check the final result with the return type
+        if not ValueHelper.is_value_compatible_with_value(self.final_result, default_value):
+            self.interpreter_base.error(ErrorType.TYPE_ERROR)
+
         return
 
     def __execute_all_sub_statements_of_begin_statement(self, statement) -> None:

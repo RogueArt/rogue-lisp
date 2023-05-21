@@ -29,7 +29,7 @@ class ValueHelper():
         elif value is False:
             return InterpreterBase.FALSE_DEF
         elif value is None or isinstance(value, ObjectDefinition):
-            return InterpreterBase.NULL_DEF
+            return "None"
         elif isinstance(value, str):
             return value  # '"' + value + '"'
         elif isinstance(value, int):
