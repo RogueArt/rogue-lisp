@@ -60,10 +60,10 @@ class Interpreter(InterpreterBase):
                 # If the class inherits from another class, then get that classes' ancestors and add it to the stack
                 base_class_name = class_def[3]
                 base_class = self.find_definition_for_class(base_class_name)
-                base_class_ancestors = base_class.get_ancestors()
+                base_class_ancestors = base_class.get_ancestor_class_defs()
 
                 derived_class = self.class_definitions[class_name] 
-                derived_class.set_ancestors([base_class] + base_class_ancestors)
+                derived_class.set_ancestor_class_defs([base_class] + base_class_ancestors)
 
             # Parse the methods and fields from the object
             fields = self.__get_fields_for_class(class_def)

@@ -21,6 +21,9 @@ class ObjectDefinition:
         self.fields: Dict[str, BrewinAsPythonValue]= fields
         self.terminated = False
 
+        # Polymorphism / inheritance
+        self.ancestor_objs = []
+
         # Always add the self reference value
         self.fields[InterpreterBase.ME_DEF] = Value(self, self)
 
@@ -32,6 +35,10 @@ class ObjectDefinition:
 
         self.method_stack = []
         self.current_method = None
+
+    # <========== POLYMORPHISM & INHERITANCE ===========>
+    def set_ancestor_objs(self, ancestor_objs: List[ObjectDefinition]) -> None:
+        self.ancestor_objs = ancestor_objs
 
     # <========== CODE RUNNERS ============>
     # Interpret the specified method using the provided parameters
