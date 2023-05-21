@@ -55,6 +55,14 @@ class Interpreter(InterpreterBase):
             # Get class name
             class_name = class_def[1]
 
+            # Build inheritance chain at the same time
+            if len(class_def) > 2 and class_def[2] == InterpreterBase.INHERITS_DEF:
+                # If the class inherits from another class, then get that classes' ancestors and add it to the stack
+                parent_class_name = class_def[3]
+                parent_class = self.find_definition_for_class(parent_class_name)
+                parent_class_ancestors = parent_class.get_ancestors()
+                self.class_definitions[class_name].add_ancestors([parent_class] + parent_class_ancestors)
+
             # Parse the methods and fields from the object
             fields = self.__get_fields_for_class(class_def)
             self.class_definitions[class_name].set_fields(fields)
