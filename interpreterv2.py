@@ -8,7 +8,7 @@ from v2_constants import *
 from v2_class_def import ClassDefinition
 from v2_object_def import ObjectDefinition
 from v2_method_def import MethodDefinition
-from v2_value_def import ValueHelper
+from v2_value_def import ValueHelper, Value
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_ouptput=True, inp=None, trace_output=False):
@@ -50,12 +50,17 @@ class Interpreter(InterpreterBase):
             self.class_definitions[class_name] = ClassDefinition(
                 self, self.interpreter_base, class_name, [], [])
 
-            # Parse the methods and fields from the object
-            methods = self.__get_methods_for_class(class_def)
-            self.class_definitions[class_name].set_methods(methods)
+        # Two-pass method: we now pick up all class definitions beforehand
+        for class_def in parsed_program:
+            # Get class name
+            class_name = class_def[1]
 
+            # Parse the methods and fields from the object
             fields = self.__get_fields_for_class(class_def)
             self.class_definitions[class_name].set_fields(fields)
+            
+            methods = self.__get_methods_for_class(class_def)
+            self.class_definitions[class_name].set_methods(methods)
  
 
     def __get_methods_for_class(self, class_def: list) -> list:
@@ -96,12 +101,17 @@ class Interpreter(InterpreterBase):
                 # Read the type hint and value, verify that they match
                 value: int|bool|str|None|ObjectDefinition = ValueHelper.parse_str_into_python_value(self, value_str)
                 field_type: type = ValueHelper.get_variable_type_from_type_str(self, field_type_str)
-                if not ValueHelper.is_value_compatible_with_type(value, field_type):
+                
+                # We must compare the variable with the value we just parsed
+                # Any arbitrary value for the variable
+                field_variable = Value(field_type,  None)
+                field_value = Value(ValueHelper.get_type_from_value(value), value)
+                if not ValueHelper.is_value_compatible_with_variable(field_value, field_variable):
                     self.interpreter_base.error(ErrorType.TYPE_ERROR)
                 
                 # TO-DO: Add variable types
                 # Fields map stores <name:Value> pairs
-                fields[field_name] = { 'type': field_type, 'value': value }
+                fields[field_name] = Value(field_type, value)
 
         return fields
 
