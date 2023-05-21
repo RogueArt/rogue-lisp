@@ -27,7 +27,7 @@ class MethodDefinition:
         # Case 3: Both are object references
         # TO-DO: Update this for polymorphism
         if isinstance(self.return_type, ClassDefinition) and isinstance(final_result_program_value.type(), ClassDefinition):
-            return self.return_type.class_name == final_result_program_value.type().class_name
+            return self.return_type.is_other_class_def_same_or_derived_class(final_result_program_value.type())
 
         # Case 4: One is an object reference, the other is a dangling null
         if isinstance(self.return_type, ClassDefinition) and final_result_program_value.type() is None:
