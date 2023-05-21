@@ -48,7 +48,7 @@ class Interpreter(InterpreterBase):
 
            # Create a new class with given methods and fields
             self.class_definitions[class_name] = ClassDefinition(
-                self, self.interpreter_base, class_name, [], [])
+                self, self.interpreter_base, class_name, [], [], [])
 
         # Two-pass method: we now pick up all class definitions beforehand
         for class_def in parsed_program:
@@ -58,10 +58,12 @@ class Interpreter(InterpreterBase):
             # Build inheritance chain at the same time
             if len(class_def) > 2 and class_def[2] == InterpreterBase.INHERITS_DEF:
                 # If the class inherits from another class, then get that classes' ancestors and add it to the stack
-                parent_class_name = class_def[3]
-                parent_class = self.find_definition_for_class(parent_class_name)
-                parent_class_ancestors = parent_class.get_ancestors()
-                self.class_definitions[class_name].add_ancestors([parent_class] + parent_class_ancestors)
+                base_class_name = class_def[3]
+                base_class = self.find_definition_for_class(base_class_name)
+                base_class_ancestors = base_class.get_ancestors()
+
+                derived_class = self.class_definitions[class_name] 
+                derived_class.set_ancestors([base_class] + base_class_ancestors)
 
             # Parse the methods and fields from the object
             fields = self.__get_fields_for_class(class_def)
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     test_programs = get_test_programs()
     skip_tests = []  # , 'set_fields'
     # skip_tests = ['field_and_method_types']
-    run_tests = []
+    run_tests = ['inheritance_chain_test']
     # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
     for count, (program_name, program) in enumerate(test_programs.items()):
         if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:

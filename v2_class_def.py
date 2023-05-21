@@ -20,12 +20,12 @@ class ClassDefinition:
     def set_fields(self, fields):
         self.fields = fields
 
+    def set_ancestors(self, ancestors: list) -> None:
+        self.ancestors = ancestors
+
     def get_ancestors(self) -> List['ClassDefinition']:
         return self.ancestors
     
-    def add_ancestors(self, ancestors: list) -> None:
-        self.ancestors += ancestors
-
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
         from v2_object_def import ObjectDefinition

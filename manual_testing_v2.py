@@ -370,18 +370,15 @@ def get_test_programs():
     (class student inherits person (method void main () (return)))
   (class dog inherits animal (method void main () (return)))
       (class goldenretriever inherits dog (method void main () (return)))
+        (class golden_puppy inherits goldenretriever (method void main () (return)))
 
 (class main
   (method void main ()
     (begin
-      (print "Sanity check for inheritance chains")
+      (print "Sanity check for inheritance chains - no output/calls")
     )
   )
 )
-
-
-
-
     """.split('\n')
     
     basic_inheritance = """
