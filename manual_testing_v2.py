@@ -483,6 +483,51 @@ def get_test_programs():
       )    
     """
 
+    # Attempt to call a method that doesn't exist on the ancestor class
+    # Testing strategy:
+    # 1. Checks that we can detect invalid method calls on on the ancestor person class
+    method_overloading_invalid_test = """
+    (class foo
+    (method void f ((int x)) (print x))
+    )
+    (class bar inherits foo
+    (method void f ((int x) (int y)) (print x " " y))
+    )
+
+    (class main
+    (field bar b null)
+    (method void main ()
+      (begin
+        (set b (new bar))
+        (call b f 10 20)   # calls version of f defined in bar
+        (call b f 10 (new foo) null "hello" true)  	# calls version of f defined in foo
+      )
+    )
+    )
+    """.split('\n')
+
+    # Verify that we can correctly overload methods when calling
+    # Testing strategy 
+    method_overloading_test = """
+    (class foo
+    (method void f ((int x)) (print x))
+    )
+    (class bar inherits foo
+    (method void f ((int x) (int y)) (print x " " y))
+    )
+
+    (class main
+    (field bar b null)
+    (method void main ()
+      (begin
+        (set b (new bar))
+        (call b f 10)  	# calls version of f defined in foo
+        (call b f 10 20)   # calls version of f defined in bar
+      )
+    )
+    )
+    """.split('\n')
+
     # Invalid inheritance cases: TO-DO
     
 
