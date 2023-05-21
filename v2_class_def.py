@@ -26,9 +26,23 @@ class ClassDefinition:
     def get_ancestor_class_defs(self) -> List['ClassDefinition']:
         return self.ancestor_class_defs
 
-    # uses the definition of a class to create and return an instance of it
-    def instantiate_object(self):
+    def create_obj(self):
         from v2_object_def import ObjectDefinition
         obj = ObjectDefinition(self.interpreter, self.interpreter_base, self.class_name,
                                copy.deepcopy(self.methods), copy.deepcopy(self.fields))
+        return obj
+
+    # uses the definition of a class to create and return an instance of it
+    def instantiate_object(self):
+        from v2_object_def import ObjectDefinition
+
+        # Instantiate the ancestor list
+        ancestors_objs: List[ObjectDefinition] = []
+        for ancestor_class_def in self.ancestor_class_defs:
+            ancestor_obj = ancestor_class_def.create_obj()
+            ancestors_objs.append(ancestor_obj)
+        
+        # Create the object with the ancestor list
+        obj = self.create_obj()
+        obj.set_ancestor_objs(ancestors_objs)
         return obj
