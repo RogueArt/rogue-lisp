@@ -37,12 +37,29 @@ class ClassDefinition:
         from v2_object_def import ObjectDefinition
 
         # Instantiate the ancestor list
+        """
+        Explanation of algorithm:
+        Let's say we have three classes: A -> B -> C
+        
+        Our code needs to read in class defs in the order of C <- B <- A
+        Then in order for ancestors to have access to above ancestors, we do this:
+        1. Read in the class defs in reverse order (A, B, C)
+        2. Upon initializing each ancestor, copy over the list of current so far, then add to list
+
+        Example:
+        Once we read in A, then instantiate this object, set ancestors (which are `[]`), then add to list
+        Once we read in B, then instantiate this object, set ancestors (which are `[A]`), then add to list
+        
+        Each time, we reverse this list (though we don't have to), since it makes it easy for us to do:
+        for ancestor in ancestors in Python, without having to remember to reverse iterate the list each time
+        """
         ancestors_objs: List[ObjectDefinition] = []
-        for ancestor_class_def in self.ancestor_class_defs:
+        for ancestor_class_def in self.ancestor_class_defs[::-1]:
             ancestor_obj = ancestor_class_def.create_obj()
+            ancestor_obj.set_ancestor_objs(copy.copy(ancestors_objs[::-1]))
             ancestors_objs.append(ancestor_obj)
         
         # Create the object with the ancestor list
         obj = self.create_obj()
-        obj.set_ancestor_objs(ancestors_objs)
+        obj.set_ancestor_objs(ancestors_objs[::-1])
         return obj

@@ -136,8 +136,10 @@ class ObjectDefinition:
     def get_method_with_name(self, method_name: str) -> None|MethodDefinition:
         if method_name in self.methods:
             return self.methods[method_name]
-        else:
-            self.interpreter_base.error(ErrorType.NAME_ERROR)
+        self.interpreter_base.error(ErrorType.NAME_ERROR)
+
+    def has_method_with_name(self, method_name) -> bool:
+        return method_name in self.methods
 
     # Account for scoping
     # Note: we have to explicitly check for this as Python only has "None", not "undefined"
@@ -329,17 +331,27 @@ class ObjectDefinition:
         obj_name, method_name, param_expressions = statement[1], statement[2], statement[3:]
         
         # Get object based on if it's the current or some other object
-        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(
-            obj_name).value()
+        # TO-DO: Refactor this so it's just self.evaluate_expression()
+        obj = self if obj_name == InterpreterBase.ME_DEF else self.evaluate_expression(obj_name).value()
 
         # Call made to object reference of null must generate an error
         if obj is None:
             self.interpreter_base.error(ErrorType.FAULT_ERROR)
 
-        # Parameters to the method are any variable, constant, or expression
-        # We evaluate each expression and create a map of parameter names to values
-        parameter_map = {}
-        method = obj.get_method_with_name(method_name)
+        # TO-DO: Move this code block into a function
+        # Get the method from object
+        method = None
+        if obj.has_method_with_name(method_name):
+            method = obj.get_method_with_name(method_name)
+
+        # If it doesn't exist, then get it from its ancestors
+        # Method call is now being simulated within the ancestor object
+        if method is None:
+            for ancestor_obj in obj.ancestor_objs:
+                if ancestor_obj.has_method_with_name(method_name):
+                    method = ancestor_obj.get_method_with_name(method_name)
+                    obj = ancestor_obj
+                    break 
 
         # Call made to a method name that does not exist must generate an error
         if method is None:
@@ -349,6 +361,9 @@ class ObjectDefinition:
         if len(param_expressions) != len(method.parameter_names):
             self.interpreter_base.error(ErrorType.NAME_ERROR) # TO-DO: Double check error type
 
+        # Parameters to the method are any variable, constant, or expression
+        # We evaluate each expression and create a map of parameter names to values
+        parameter_map = {}
         for index, expression in enumerate(param_expressions):
             # Get the value for each variable name
             evaluated_expr = self.evaluate_expression(expression)
