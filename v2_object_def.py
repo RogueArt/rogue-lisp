@@ -13,7 +13,7 @@ BrewinAsPythonValue = Union[None, int, str, bool, 'ObjectDefinition']
 
 import copy
 class ObjectDefinition:
-    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, class_def: 'ClassDefinition', methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
+    def __init__(self, interpreter: Interpreter, interpreter_base: InterpreterBase, class_name: str, class_def: 'ClassDefinition', base_obj, methods: Dict[str, MethodDefinition], fields: Dict[str, BrewinAsPythonValue]):
         self.interpreter: Interpreter = interpreter
         self.interpreter_base: InterpreterBase = interpreter_base
         self.class_name: str = class_name
@@ -26,8 +26,10 @@ class ObjectDefinition:
         self.ancestor_objs: List[ObjectDefinition] = []
 
         # Always add the self reference value
-        self.fields[InterpreterBase.ME_DEF] = Variable(self.interpreter, self.class_name, 'null')
-        self.fields[InterpreterBase.ME_DEF].value().set_value_to_other_checked(interpreter, Value(self.interpreter, self.class_def, self))
+        # For derived classes, we refer to the base object for execution
+        base_obj = self if base_obj is None else base_obj
+        self.fields[InterpreterBase.ME_DEF] = Variable(base_obj.interpreter, base_obj.class_name, 'null')
+        self.fields[InterpreterBase.ME_DEF].value().set_value_to_other_checked(interpreter, Value(base_obj.interpreter, base_obj.class_def, base_obj))
 
         self.parameter_stack: List[Dict[str, BrewinAsPythonValue]] = [{}]
         self.parameters: Dict[str, BrewinAsPythonValue] = self.parameter_stack[-1]
@@ -393,7 +395,7 @@ class ObjectDefinition:
         
         # Get object based on if it's the current or some other object
         # TO-DO: Refactor this so it's just self.evaluate_expression()
-        obj = self if (obj_name == InterpreterBase.ME_DEF or obj_name == InterpreterBase.SUPER_DEF) else self.evaluate_expression(obj_name).value()
+        obj = self if obj_name == InterpreterBase.SUPER_DEF else self.evaluate_expression(obj_name).value()
 
         # Call made to object reference of null must generate an error
         if obj is None:
