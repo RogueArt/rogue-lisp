@@ -6,13 +6,13 @@ import copy
 
 class ClassDefinition:
     # constructor for a ClassDefinition
-    def __init__(self, interpreter, interpreter_base: InterpreterBase, name, methods, fields, ancestors = []):
+    def __init__(self, interpreter, interpreter_base: InterpreterBase, name, methods, fields, ancestor_class_defs):
         self.interpreter = interpreter
         self.interpreter_base = interpreter_base
         self.class_name = name
         self.methods = methods
         self.fields = fields
-        self.ancestors = ancestors
+        self.ancestor_class_defs = ancestor_class_defs
 
     def set_methods(self, methods):
         self.methods = methods
@@ -20,12 +20,12 @@ class ClassDefinition:
     def set_fields(self, fields):
         self.fields = fields
 
-    def set_ancestors(self, ancestors: list) -> None:
-        self.ancestors = ancestors
+    def set_ancestor_class_defs(self, ancestor_class_defs: list) -> None:
+        self.ancestor_class_defs = ancestor_class_defs
 
-    def get_ancestors(self) -> List['ClassDefinition']:
-        return self.ancestors
-    
+    def get_ancestor_class_defs(self) -> List['ClassDefinition']:
+        return self.ancestor_class_defs
+
     # uses the definition of a class to create and return an instance of it
     def instantiate_object(self):
         from v2_object_def import ObjectDefinition
