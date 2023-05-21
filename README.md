@@ -3,6 +3,8 @@
 ## Project Status (for TAs)
 ### Project Status (v2)
 - No known issues / everything works correctly! ("all good!")
+- All local tests pass (224/224)
+- All auto grader tests pass (90/90)
 ### Project Status (v1)
 
 - No known issues / everything works correctly ("all good!")
