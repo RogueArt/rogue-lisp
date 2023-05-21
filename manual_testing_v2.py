@@ -528,6 +528,30 @@ def get_test_programs():
     )
     """.split('\n')
 
+    # Verify that we can set a derived class into the base class
+    polymorphism_valid_basic_test = """
+        (class person
+      (method void nothing ()
+        (return)
+      )
+    )
+
+    (class student inherits person
+      (method void nothing ()
+        (return)
+      )
+    )
+
+    (class main
+      (field person p null)
+      (method void main ()
+        (begin
+          (set p (new student))
+        )
+      )
+    )
+    """.split()
+
     # Invalid inheritance cases: TO-DO
     
 
