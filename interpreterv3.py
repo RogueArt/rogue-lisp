@@ -99,3 +99,40 @@ class Interpreter(InterpreterBase):
                     superclass_name = item[3]
                 self.type_manager.add_class_type(class_name, superclass_name)
 
+# CODE FOR DEBUGGING PURPOSES ONLY
+if __name__ == "__main__":
+    from manual_testing_v3 import get_test_programs
+
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    RESET = '\033[0m'
+
+    test_programs = get_test_programs()
+    skip_tests = []  # , 'set_fields'
+    # skip_tests = ['field_and_method_types']
+    run_tests = []
+    # run_tests = ['test_set_instantiation', 'test_return_instantiation', 'test_null_return_instantiation'] 
+    for count, (program_name, program) in enumerate(test_programs.items()):
+        if (len(run_tests) > 0 and program_name not in run_tests) or program_name in skip_tests:
+            print(YELLOW + f"Skipping test #{count+1} {program_name}" + RESET)
+            continue
+
+        if (len(run_tests) > 0 and program_name in run_tests) or len(run_tests) == 0:
+            try:
+                print(GREEN + f"Running test #{count+1} {program_name}:" + RESET)
+                interpreter = Interpreter()
+                interpreter.run(program)
+                print(GREEN + f"Finished testing {program_name}\n\n" + RESET)
+            except RuntimeError as e:
+                if e.args[0] == 'ErrorType.TYPE_ERROR':
+                    print("Code exited with ErrorType.TYPE_ERROR")
+                elif e.args[0] == 'ErrorType.NAME_ERROR':
+                    print("Code exited with ErrorType.NAME_ERROR")
+                elif e.args[0] == 'ErrorType.SYNTAX_ERROR':
+                    print("Code exited with ErrorType.SYNTAX_ERROR")
+                elif e.args[0] == 'ErrorType.FAULT_ERROR':
+                    print("Code exited with ErrorType.FAULT_ERROR")
+                else:
+                    raise e
