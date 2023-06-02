@@ -279,9 +279,15 @@ class ObjectDef:
     # where params are expressions, and expresion could be a value, or a (+ ...)
     # statement version of a method call; there's also an expression version of a method call below
     def __execute_call(self, env, code):
-        return ObjectDef.STATUS_PROCEED, self.__execute_call_aux(
+        executed_call_value = self.__execute_call_aux(
             env, code, code[0].line_num
         )
+        
+        # For an error, indicate it's of type error
+        if executed_call_value.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, executed_call_value
+
+        return ObjectDef.STATUS_PROCEED, executed_call_value
 
     # (set varname expression), where expression could be a value, or a (+ ...)
     def __execute_set(self, env, code):
