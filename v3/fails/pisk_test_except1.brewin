@@ -1,0 +1,11 @@
+(class main
+  (method void main ()
+    (begin
+      (try
+       (call me bar)
+       (print "The thrown exception was: " exception)
+      )
+      (print "This should fail: " exception)  # fails with NAME_ERROR
+    )
+  )
+)

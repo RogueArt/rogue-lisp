@@ -10,11 +10,13 @@ class ObjectDef:
     # statement execution results
     STATUS_PROCEED = 0
     STATUS_RETURN = 1
+    STATUS_EXCEPTION = 2
 
     # type constants
     INT_TYPE_CONST = Type(InterpreterBase.INT_DEF)
     STRING_TYPE_CONST = Type(InterpreterBase.STRING_DEF)
     BOOL_TYPE_CONST = Type(InterpreterBase.BOOL_DEF)
+    EXCEPTION_TYPE_CONST = Type(InterpreterBase.THROW_DEF)
 
     # class_def is a ClassDef object
     def __init__(self, interpreter, class_def, anchor_object=None, trace_output=False):
@@ -93,7 +95,7 @@ class ObjectDef:
         )
         # if the method explicitly used the (return expression) statement to return a value, then return that
         # value back to the caller
-        if status == ObjectDef.STATUS_RETURN and return_value is not None:
+        if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION and return_value is not None:
             return return_value
         # The method didn't explicitly return a value, so return the default return type for the method
         return create_default_value(method_def.get_return_type())
@@ -143,11 +145,85 @@ class ObjectDef:
             return self.__execute_print(env, code)
         elif tok == InterpreterBase.LET_DEF:
             return self.__execute_let(env, return_type, code)
+        elif tok == InterpreterBase.TRY_DEF:
+            return self.__execute_try(env, return_type, code)
+        elif tok == InterpreterBase.THROW_DEF:
+            return self.__execute_throw(env, return_type, code)
         else:
             # Report error via interpreter
             self.interpreter.error(
                 ErrorType.SYNTAX_ERROR, "unknown statement " + tok, tok.line_num
             )
+
+    def __execute_throw(self, env, return_type, code):
+        # Check if throw statement was provided with an expression
+        if len(code) != 2:
+            self.interpreter.error(
+                ErrorType.SYNTAX_ERROR,
+                "throw statement must have an expression next to it",
+                code[0].line_num,
+            )
+
+        # Evaluate the RHS expression
+        evaluated_value = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+        # Check that the expression is a string type
+        evaluated_value_type = evaluated_value.type()
+        if evaluated_value_type != ObjectDef.STRING_TYPE_CONST:
+            self.interpreter.error(
+                ErrorType.TYPE_ERROR,
+                "throw statement must throw a string",
+                code[0].line_num,
+            )
+
+        # Set the type of the value as exception to distinguish it from string
+        return_value = Value(ObjectDef.EXCEPTION_TYPE_CONST, evaluated_value.value())
+
+        # Throw the exception (as string value)
+        return ObjectDef.STATUS_EXCEPTION, return_value
+
+    def __execute_try(self, env, return_type, code):
+        # Statement to try is always executed first
+        statement_to_try = code[1]
+        status, return_value = self.__execute_statement(
+            env, return_type, statement_to_try
+        )
+        if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_PROCEED:
+            return status, return_value
+
+        # Begin executing the catch statement
+        # Note: this is the only other possibility other than return status
+        if len(code) != 3:
+            self.interpreter.error(
+                ErrorType.SYNTAX_ERROR,
+                "try statement must have two statements",
+                code[0].line_num,
+            )
+
+        statement_to_catch = code[2]
+        if status == ObjectDef.STATUS_EXCEPTION:
+            # Add the exception variable into scope - we treat it like a local variable
+            # TO-DO: Double check this line - not done with full understanding!
+            env.block_nest()
+            exception_as_str_val = Value(ObjectDef.STRING_TYPE_CONST, return_value.value())
+            var_def = VariableDef(ObjectDef.STRING_TYPE_CONST, "exception", exception_as_str_val)
+
+            env.create_new_symbol("exception")
+            env.set("exception", var_def)
+
+            # Begin executing code with this
+            status, return_value = self.__execute_statement(
+                env, return_type, statement_to_catch
+            )
+
+            # Remove exception variable from the scope
+            env.block_unnest()
+
+            # Handle case if having a return or another exception inside catch
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
+                return status, return_value
+            
+            return status, return_value
 
     # This method is used for both the begin and let statements
     # (begin (statement1) (statement2) ... (statementn))
@@ -164,7 +240,7 @@ class ObjectDef:
         return_value = None
         for statement in code[code_start:]:
             status, return_value = self.__execute_statement(env, return_type, statement)
-            if status == ObjectDef.STATUS_RETURN:
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
                 break
         # if we run through the entire block without a return, then just return proceed
         # we don't want the enclosing block to exit with a return
@@ -207,13 +283,23 @@ class ObjectDef:
     # where params are expressions, and expresion could be a value, or a (+ ...)
     # statement version of a method call; there's also an expression version of a method call below
     def __execute_call(self, env, code):
-        return ObjectDef.STATUS_PROCEED, self.__execute_call_aux(
+        executed_call_value = self.__execute_call_aux(
             env, code, code[0].line_num
         )
+        
+        # For an error, indicate it's of type error
+        if executed_call_value.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, executed_call_value
+
+        return ObjectDef.STATUS_PROCEED, executed_call_value
 
     # (set varname expression), where expression could be a value, or a (+ ...)
     def __execute_set(self, env, code):
         val = self.__evaluate_expression(env, code[2], code[0].line_num)
+        # Halt execution and immediately leave upon seeing error 
+        if val.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, val
+
         self.__set_variable_aux(
             env, code[1], val, code[0].line_num
         )  # checks/reports type and name errors
@@ -226,6 +312,11 @@ class ObjectDef:
             return ObjectDef.STATUS_RETURN, None
         else:
             result = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+            # Halt execution and immediately leave upon seeing error 
+            if result.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, result
+
             # CAREY FIX
             if result.is_typeless_null():
                 self.__check_type_compatibility(return_type, result.type(), True, code[0].line_num) 
@@ -243,6 +334,11 @@ class ObjectDef:
             term = self.__evaluate_expression(env, expr, code[0].line_num)
             val = term.value()
             typ = term.type()
+
+            # Halt execution and immediately leave upon seeing error 
+            if term.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, term
+
             if typ == ObjectDef.BOOL_TYPE_CONST:
                 if val == True:
                     val = "true"
@@ -282,6 +378,11 @@ class ObjectDef:
     # variable without ()s, or a boolean expression in parens, like (> 5 a)
     def __execute_if(self, env, return_type, code):
         condition = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+        # Halt execution and immediately leave upon seeing error 
+        if condition.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, condition
+        
         if condition.type() != ObjectDef.BOOL_TYPE_CONST:
             self.interpreter.error(
                 ErrorType.TYPE_ERROR,
@@ -306,6 +407,11 @@ class ObjectDef:
     def __execute_while(self, env, return_type, code):
         while True:
             condition = self.__evaluate_expression(env, code[1], code[0].line_num)
+            
+            # Halt execution and immediately leave upon seeing error 
+            if condition.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, condition
+
             if condition.type() != ObjectDef.BOOL_TYPE_CONST:
                 self.interpreter.error(
                     ErrorType.TYPE_ERROR,
@@ -316,7 +422,7 @@ class ObjectDef:
                 return ObjectDef.STATUS_PROCEED, None
             # condition is true, run body of while loop
             status, return_value = self.__execute_statement(env, return_type, code[2])
-            if status == ObjectDef.STATUS_RETURN:
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
                 return (
                     status,
                     return_value,
@@ -407,6 +513,11 @@ class ObjectDef:
                 return self.binary_ops[InterpreterBase.CLASS_DEF][operator](
                     operand1, operand2
                 )
+            # Either operand was an error, re-throw exception immediately
+            if operand1.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return operand1
+            if operand2.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return operand2
             self.interpreter.error(
                 ErrorType.TYPE_ERROR,
                 f"operator {operator} applied to two incompatible types",
@@ -465,9 +576,13 @@ class ObjectDef:
         # prepare the actual arguments for passing
         actual_args = []
         for expr in code[3:]:
-            actual_args.append(
-                self.__evaluate_expression(env, expr, line_num_of_statement)
-            )
+            evaluated_value = self.__evaluate_expression(env, expr, line_num_of_statement)
+
+            # Halt execution and immediately leave upon seeing error
+            if evaluated_value.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return evaluated_value
+
+            actual_args.append(evaluated_value)
         return obj.call_method(code[2], actual_args, super_only, line_num_of_statement)
 
     def __map_method_names_to_method_definitions(self):
