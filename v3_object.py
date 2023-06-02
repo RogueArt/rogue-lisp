@@ -147,11 +147,40 @@ class ObjectDef:
             return self.__execute_let(env, return_type, code)
         elif tok == InterpreterBase.TRY_DEF:
             return self.__execute_try(env, return_type, code)
+        elif tok == InterpreterBase.THROW_DEF:
+            return self.__execute_throw(env, return_type, code)
         else:
             # Report error via interpreter
             self.interpreter.error(
                 ErrorType.SYNTAX_ERROR, "unknown statement " + tok, tok.line_num
             )
+
+    def __execute_throw(self, env, return_type, code):
+        # Check if throw statement was provided with an expression
+        if len(code) != 2:
+            self.interpreter.error(
+                ErrorType.SYNTAX_ERROR,
+                "throw statement must have an expression next to it",
+                code[0].line_num,
+            )
+
+        # Evaluate the RHS expression
+        evaluated_value = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+        # Check that the expression is a string type
+        evaluated_value_type = evaluated_value.type()
+        if evaluated_value_type != ObjectDef.STRING_TYPE_CONST:
+            self.interpreter.error(
+                ErrorType.TYPE_ERROR,
+                "throw statement must throw a string",
+                code[0].line_num,
+            )
+
+        # Set the type of the value as exception to distinguish it from string
+        return_value = Value(ObjectDef.EXCEPTION_TYPE_CONST, evaluated_value.value())
+
+        # Throw the exception (as string value)
+        return ObjectDef.STATUS_EXCEPTION, return_value
 
     def __execute_try(self, env, return_type, code):
         if len(code) != 3:
