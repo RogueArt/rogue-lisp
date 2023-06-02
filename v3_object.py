@@ -145,11 +145,52 @@ class ObjectDef:
             return self.__execute_print(env, code)
         elif tok == InterpreterBase.LET_DEF:
             return self.__execute_let(env, return_type, code)
+        elif tok == InterpreterBase.TRY_DEF:
+            return self.__execute_try(env, return_type, code)
         else:
             # Report error via interpreter
             self.interpreter.error(
                 ErrorType.SYNTAX_ERROR, "unknown statement " + tok, tok.line_num
             )
+
+    def __execute_try(self, env, return_type, code):
+        if len(code) != 3:
+            self.interpreter.error(
+                ErrorType.SYNTAX_ERROR,
+                "try statement must have two statements",
+                code[0].line_num,
+            )
+
+        # Statement to try is always executed first
+        statement_to_try = code[1]
+        status, return_value = self.__execute_statement(
+            env, return_type, statement_to_try
+        )
+        if status == ObjectDef.STATUS_RETURN:
+            return status, return_value
+        
+        # Begin executing the catch statement
+        # Note: this is the only other possibility other than return status
+        statement_to_catch = code[2]
+        if status == ObjectDef.STATUS_EXCEPTION:
+            # Add the exception variable into scope - we treat it like a local variable
+            # TO-DO: Double check this line - not done with full understanding!
+            env.block_nest()
+            exception_as_str_val = Value(ObjectDef.STRING_TYPE_CONST, return_value.value())
+            var_def = VariableDef(ObjectDef.STRING_TYPE_CONST, "exception", exception_as_str_val)
+            env.set("exception", var_def)
+
+            # Begin executing code with this
+            status, return_value = self.__execute_statement(
+                env, return_type, statement_to_catch
+            )
+
+            # Remove exception variable from the scope
+            env.block_unnest()
+
+            # Handle case if having a return or another exception inside  catch
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
+                return status, return_value
 
     # This method is used for both the begin and let statements
     # (begin (statement1) (statement2) ... (statementn))
