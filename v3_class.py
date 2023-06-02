@@ -36,7 +36,7 @@
 """
 
 from intbase import InterpreterBase, ErrorType
-from v3_type_value import Type, create_value
+from v3_type_value import Type, create_value, create_default_value
 
 class VariableDef:
     # var_type is a Type() and value is a Value()
@@ -148,8 +148,14 @@ class ClassDef:
     # field def: [field typename varname defvalue]
     # returns a VariableDef object that represents that field
     def __create_variable_def_from_field(self, field_def):
+        # Use initial value if provided, 
+        # otherwise create a default value for the type
+        value = create_default_value(Type(field_def[1]))
+        if len(field_def) > 3:
+            value = create_value(field_def[3])
+
         var_def = VariableDef(
-            Type(field_def[1]), field_def[2], create_value(field_def[3])
+            Type(field_def[1]), field_def[2], value
         )
         if not self.interpreter.check_type_compatibility(
             var_def.type, var_def.value.type(), True
