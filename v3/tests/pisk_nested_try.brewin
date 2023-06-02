@@ -1,0 +1,18 @@
+(class main
+ (method void main ()
+  (begin
+    (try
+      (try
+        (begin
+          (print "From the nested try")
+          (throw "I am an exception!")
+        )
+        (begin
+          (print "From the nested catch")
+        )
+      )
+    (print "From the outside catch")
+    )
+  )
+ )
+)
