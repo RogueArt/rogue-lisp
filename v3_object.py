@@ -183,6 +183,16 @@ class ObjectDef:
         return ObjectDef.STATUS_EXCEPTION, return_value
 
     def __execute_try(self, env, return_type, code):
+        # Statement to try is always executed first
+        statement_to_try = code[1]
+        status, return_value = self.__execute_statement(
+            env, return_type, statement_to_try
+        )
+        if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_PROCEED:
+            return status, return_value
+
+        # Begin executing the catch statement
+        # Note: this is the only other possibility other than return status
         if len(code) != 3:
             self.interpreter.error(
                 ErrorType.SYNTAX_ERROR,
@@ -190,16 +200,6 @@ class ObjectDef:
                 code[0].line_num,
             )
 
-        # Statement to try is always executed first
-        statement_to_try = code[1]
-        status, return_value = self.__execute_statement(
-            env, return_type, statement_to_try
-        )
-        if status == ObjectDef.STATUS_RETURN:
-            return status, return_value
-        
-        # Begin executing the catch statement
-        # Note: this is the only other possibility other than return status
         statement_to_catch = code[2]
         if status == ObjectDef.STATUS_EXCEPTION:
             # Add the exception variable into scope - we treat it like a local variable
