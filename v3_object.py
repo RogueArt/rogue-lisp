@@ -292,6 +292,10 @@ class ObjectDef:
     # (set varname expression), where expression could be a value, or a (+ ...)
     def __execute_set(self, env, code):
         val = self.__evaluate_expression(env, code[2], code[0].line_num)
+        # Halt execution and immediately leave upon seeing error 
+        if val.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, val
+
         self.__set_variable_aux(
             env, code[1], val, code[0].line_num
         )  # checks/reports type and name errors
@@ -304,6 +308,11 @@ class ObjectDef:
             return ObjectDef.STATUS_RETURN, None
         else:
             result = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+            # Halt execution and immediately leave upon seeing error 
+            if result.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, result
+
             # CAREY FIX
             if result.is_typeless_null():
                 self.__check_type_compatibility(return_type, result.type(), True, code[0].line_num) 
@@ -321,6 +330,11 @@ class ObjectDef:
             term = self.__evaluate_expression(env, expr, code[0].line_num)
             val = term.value()
             typ = term.type()
+
+            # Halt execution and immediately leave upon seeing error 
+            if term.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, term
+
             if typ == ObjectDef.BOOL_TYPE_CONST:
                 if val == True:
                     val = "true"
@@ -360,6 +374,11 @@ class ObjectDef:
     # variable without ()s, or a boolean expression in parens, like (> 5 a)
     def __execute_if(self, env, return_type, code):
         condition = self.__evaluate_expression(env, code[1], code[0].line_num)
+
+        # Halt execution and immediately leave upon seeing error 
+        if condition.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+            return ObjectDef.STATUS_EXCEPTION, condition
+        
         if condition.type() != ObjectDef.BOOL_TYPE_CONST:
             self.interpreter.error(
                 ErrorType.TYPE_ERROR,
@@ -384,6 +403,11 @@ class ObjectDef:
     def __execute_while(self, env, return_type, code):
         while True:
             condition = self.__evaluate_expression(env, code[1], code[0].line_num)
+            
+            # Halt execution and immediately leave upon seeing error 
+            if condition.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return ObjectDef.STATUS_EXCEPTION, condition
+
             if condition.type() != ObjectDef.BOOL_TYPE_CONST:
                 self.interpreter.error(
                     ErrorType.TYPE_ERROR,
@@ -485,6 +509,11 @@ class ObjectDef:
                 return self.binary_ops[InterpreterBase.CLASS_DEF][operator](
                     operand1, operand2
                 )
+            # Either operand was an error, re-throw exception immediately
+            if operand1.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return operand1
+            if operand2.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return operand2
             self.interpreter.error(
                 ErrorType.TYPE_ERROR,
                 f"operator {operator} applied to two incompatible types",
