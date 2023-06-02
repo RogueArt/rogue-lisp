@@ -95,7 +95,7 @@ class ObjectDef:
         )
         # if the method explicitly used the (return expression) statement to return a value, then return that
         # value back to the caller
-        if status == ObjectDef.STATUS_RETURN and return_value is not None:
+        if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION and return_value is not None:
             return return_value
         # The method didn't explicitly return a value, so return the default return type for the method
         return create_default_value(method_def.get_return_type())
@@ -236,7 +236,7 @@ class ObjectDef:
         return_value = None
         for statement in code[code_start:]:
             status, return_value = self.__execute_statement(env, return_type, statement)
-            if status == ObjectDef.STATUS_RETURN:
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
                 break
         # if we run through the entire block without a return, then just return proceed
         # we don't want the enclosing block to exit with a return
@@ -388,7 +388,7 @@ class ObjectDef:
                 return ObjectDef.STATUS_PROCEED, None
             # condition is true, run body of while loop
             status, return_value = self.__execute_statement(env, return_type, code[2])
-            if status == ObjectDef.STATUS_RETURN:
+            if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
                 return (
                     status,
                     return_value,
