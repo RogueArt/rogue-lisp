@@ -90,15 +90,20 @@ class MethodDef:
 # v2 class definition: [class classname [inherits baseclassname] [field1] [field2] ... [method1] [method2] ...]
 # [] denotes optional syntax
 class ClassDef:
-    def __init__(self, class_source, interpreter):
+    def __init__(self, class_source, interpreter, is_template_class=False):
         self.interpreter = interpreter
         self.name = class_source[1]
         self.class_source = class_source
         fields_and_methods_start_index = (
             self.__check_for_inheritance_and_set_superclass_info(class_source)
         )
-        self.__create_field_list(class_source[fields_and_methods_start_index:])
-        self.__create_method_list(class_source[fields_and_methods_start_index:])
+        self.parameter_type_strings = []
+        self.is_template_class = is_template_class
+
+        # If not template class, get fields and methods at compile time
+        if not is_template_class:
+            self.__create_field_list(class_source[fields_and_methods_start_index:])
+            self.__create_method_list(class_source[fields_and_methods_start_index:])
 
     # get the classname
     def get_name(self):
@@ -115,6 +120,10 @@ class ClassDef:
     # returns a ClassDef object
     def get_superclass(self):
         return self.super_class
+
+    # For templating - allow for initializing first, then setting parameter type strings
+    def set_parameter_type_strings(self, parameter_type_strings):
+        self.parameter_type_strings = parameter_type_strings
 
     def __check_for_inheritance_and_set_superclass_info(self, class_source):
         if class_source[2] != InterpreterBase.INHERITS_DEF:
