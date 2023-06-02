@@ -10,11 +10,13 @@ class ObjectDef:
     # statement execution results
     STATUS_PROCEED = 0
     STATUS_RETURN = 1
+    STATUS_EXCEPTION = 2
 
     # type constants
     INT_TYPE_CONST = Type(InterpreterBase.INT_DEF)
     STRING_TYPE_CONST = Type(InterpreterBase.STRING_DEF)
     BOOL_TYPE_CONST = Type(InterpreterBase.BOOL_DEF)
+    EXCEPTION_TYPE_CONST = Type(InterpreterBase.THROW_DEF)
 
     # class_def is a ClassDef object
     def __init__(self, interpreter, class_def, anchor_object=None, trace_output=False):
