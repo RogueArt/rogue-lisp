@@ -207,6 +207,8 @@ class ObjectDef:
             env.block_nest()
             exception_as_str_val = Value(ObjectDef.STRING_TYPE_CONST, return_value.value())
             var_def = VariableDef(ObjectDef.STRING_TYPE_CONST, "exception", exception_as_str_val)
+
+            env.create_new_symbol("exception")
             env.set("exception", var_def)
 
             # Begin executing code with this
@@ -217,9 +219,11 @@ class ObjectDef:
             # Remove exception variable from the scope
             env.block_unnest()
 
-            # Handle case if having a return or another exception inside  catch
+            # Handle case if having a return or another exception inside catch
             if status == ObjectDef.STATUS_RETURN or status == ObjectDef.STATUS_EXCEPTION:
                 return status, return_value
+            
+            return status, return_value
 
     # This method is used for both the begin and let statements
     # (begin (statement1) (statement2) ... (statementn))
@@ -572,9 +576,13 @@ class ObjectDef:
         # prepare the actual arguments for passing
         actual_args = []
         for expr in code[3:]:
-            actual_args.append(
-                self.__evaluate_expression(env, expr, line_num_of_statement)
-            )
+            evaluated_value = self.__evaluate_expression(env, expr, line_num_of_statement)
+
+            # Halt execution and immediately leave upon seeing error
+            if evaluated_value.type() == ObjectDef.EXCEPTION_TYPE_CONST:
+                return evaluated_value
+
+            actual_args.append(evaluated_value)
         return obj.call_method(code[2], actual_args, super_only, line_num_of_statement)
 
     def __map_method_names_to_method_definitions(self):
