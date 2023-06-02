@@ -87,6 +87,22 @@ class Interpreter(InterpreterBase):
                         item[0].line_num,
                     )
                 self.class_index[item[1]] = ClassDef(item, self)
+            elif item[0] == InterpreterBase.TEMPLATE_CLASS_DEF:
+                if item[1] in self.class_index:
+                    super().error(
+                        ErrorType.TYPE_ERROR,
+                        f"Duplicate class name {item[1]}",
+                        item[0].line_num,
+                    )
+                
+                # Template class, we need to set parameter types as well
+                # 1. Show it's a template with a boolean
+                template_class_def = ClassDef(item, self, is_template_class=True)
+
+                # 2. Parse the parameters and put it in the class definition
+                template_class_def.set_parameter_type_strings(item[2])
+
+                self.class_index[item[1]] = template_class_def
 
     # [class classname inherits superclassname [items]]
     def __add_all_class_types_to_type_manager(self, parsed_program):
@@ -98,6 +114,7 @@ class Interpreter(InterpreterBase):
                 if item[2] == InterpreterBase.INHERITS_DEF:
                     superclass_name = item[3]
                 self.type_manager.add_class_type(class_name, superclass_name)
+            # Note: we add template class types AFTER provided parameters
 
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
