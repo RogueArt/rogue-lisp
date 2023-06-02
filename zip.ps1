@@ -1,14 +1,13 @@
 $sourceFiles = @(
-    "interpreterv2.py"
-    "v2_class_def.py"
-    "v2_method_def.py"
-    "v2_object_def.py"
-    "v2_value_def.py"
-    "v2_constants.py"
+    "interpreterv3.py"
+    "v3_class.py"
+    "v3_env.py"
+    "v3_object.py"
+    "v3_type_value.py"
     "README.md"
 )
 
-$zipFile = "00-interpreterv2.zip"
+$zipFile = "00-interpreterv3.zip"
 
 if (Test-Path $zipFile) {
     Remove-Item -Path $zipFile -Force
