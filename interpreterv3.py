@@ -44,22 +44,23 @@ class Interpreter(InterpreterBase):
     # if the user tries to new an class name that does not exist. This will report the line number of the statement
     # with the new command
     def instantiate(self, class_name, line_num_of_statement):
-        if class_name not in self.class_index:
+        if class_name not in self.class_index and not self.is_initializer_str(class_name):
             super().error(
                 ErrorType.TYPE_ERROR,
                 f"No class named {class_name} found",
                 line_num_of_statement,
             )
         
-        # Default - assume it's a regular class
-        # Additionally, if template was already used, then it's cached
-        class_def = self.class_index[class_name]
 
         # Check if this is a template class
         # If it contains @, then it's actually an initializer string!
         if self.is_initializer_str(class_name):
             initializer_str = class_name
             class_def = self.create_class_def_from_template(initializer_str)
+        # Default - assume it's a regular class
+        # Additionally, if template was already used, then it's cached
+        else:
+            class_def = self.class_index[class_name]
 
         obj = ObjectDef(
             self, class_def, None, self.trace_output
@@ -164,7 +165,7 @@ class Interpreter(InterpreterBase):
             # Provided type is what the user gave, that we're replacing it with
             provided_type = provided_types[x]
             
-            parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_source, template_type, provided_type)
+            template_class_source = self.type_manager.replace_parameter_strings(template_class_source, template_type, provided_type)
 
         # Attach this to the type mananger
         # Note: there's no super class for this
@@ -172,7 +173,7 @@ class Interpreter(InterpreterBase):
 
         # Create a new class definition with this new source
         # Note: This class is not a template, so we pass in False
-        new_class_def = ClassDef(parametrized_class_source, self)
+        new_class_def = ClassDef(template_class_source, self)
         self.class_index[template_class_initializer] = new_class_def
 
         return new_class_def    
