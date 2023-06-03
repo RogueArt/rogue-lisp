@@ -124,6 +124,33 @@ class TypeManager:
                 type_info.supertype_name #check suspected supertype is in the inheritance chain
             )  # check the base class of the subtype next
 
+    def split_template_class_initializer(self, template_class_initializer):
+        split_string = template_class_initializer.split(InterpreterBase.TYPE_CONCAT_CHAR)
+        template_class_name = split_string[0]
+        parameter_types = split_string[1:]
+        return template_class_name, parameter_types
+
+    # Input is in format of: e.g. MyTemplateClass@string@foo
+    def is_template_class_initializer_str_valid(self, template_class_initializer):
+        # Process this string
+        template_class_name, provided_types = self.split_template_class_initializer(template_class_initializer)
+
+        # Check if template class exists
+        if template_class_name not in self.map_template_class_name_to_class_def:
+            return False
+        
+        # Check that the number of parameters matches template class
+        template_class = self.map_template_class_name_to_class_def[template_class_name]
+        if len(provided_types) != len(template_class.parameter_types):
+            return False
+
+        # Check that all the provided parameter types are valid
+        for parameter_type in provided_types:
+            if not self.is_valid_type(parameter_type):
+                return False
+
+        return True
+
     # typea and typeb are Type objects
     def check_type_compatibility(self, typea, typeb, for_assignment):
         # if either type is invalid (E.g., the user referenced a class name that doesn't exist) then
