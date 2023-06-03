@@ -103,6 +103,7 @@ class Interpreter(InterpreterBase):
                 template_class_def.set_parameter_type_strings(item[2])
 
                 self.class_index[item[1]] = template_class_def
+                self.type_manager.add_template_class_type(item[1], template_class_def)
 
     # [class classname inherits superclassname [items]]
     def __add_all_class_types_to_type_manager(self, parsed_program):

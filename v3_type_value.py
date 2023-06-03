@@ -82,6 +82,8 @@ class TypeManager:
         self.map_typename_to_type = {}
         self.__setup_primitive_types()
 
+        self.map_template_class_name_to_class_def = {}
+
     # used to register a new class name (and its supertype name, if present as a valid type so it can be used
     # for type checking.
     # needs to be called the moment we parse the class name and superclass name to enable things like linked lists
@@ -89,6 +91,10 @@ class TypeManager:
     def add_class_type(self, class_name, superclass_name):
         class_type = Type(class_name, superclass_name)
         self.map_typename_to_type[class_name] = class_type
+
+    # Adds this in as a list of strings
+    def add_template_class_type(self, template_class_name, template_class_def):
+        self.map_template_class_name_to_class_def[template_class_name] = template_class_def
 
     def is_valid_type(self, typename):
         return typename in self.map_typename_to_type
