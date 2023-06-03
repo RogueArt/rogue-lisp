@@ -164,7 +164,7 @@ class Interpreter(InterpreterBase):
             # Provided type is what the user gave, that we're replacing it with
             provided_type = provided_types[x]
             
-            parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_source, template_type, provided_type)
+            template_class_source = self.type_manager.replace_parameter_strings(template_class_source, template_type, provided_type)
 
         # Attach this to the type mananger
         # Note: there's no super class for this
@@ -172,7 +172,7 @@ class Interpreter(InterpreterBase):
 
         # Create a new class definition with this new source
         # Note: This class is not a template, so we pass in False
-        new_class_def = ClassDef(parametrized_class_source, self)
+        new_class_def = ClassDef(template_class_source, self)
         self.class_index[template_class_initializer] = new_class_def
 
         return new_class_def    
