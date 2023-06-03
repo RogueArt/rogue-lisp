@@ -141,22 +141,23 @@ class TypeManager:
         
         # Check that the number of parameters matches template class
         template_class = self.map_template_class_name_to_class_def[template_class_name]
-        if len(provided_types) != len(template_class.parameter_types):
+        if len(provided_types) != len(template_class.parameter_type_strings):
             return False
 
         # Check that all the provided parameter types are valid
-        for parameter_type in provided_types:
-            if not self.is_valid_type(parameter_type):
+        for provided_type in provided_types:
+            if not self.is_valid_type(provided_type):
                 return False
 
         return True
 
+    # TO-DO: Update the naming convention on this
     # Recursive function to do our find and replace 
-    def replace_parameter_strings(self, class_source, provided_type, replacement):
+    def replace_parameter_strings(self, class_source, template_type, user_provided_type):
         if isinstance(class_source, list):
-            return [self.replace_parameter_strings(item, provided_type, replacement) for item in class_source]
-        elif isinstance(class_source, str) and class_source == provided_type:
-            return replacement
+            return [self.replace_parameter_strings(item, template_type, user_provided_type) for item in class_source]
+        elif isinstance(class_source, str) and class_source == template_type:
+            return user_provided_type
         else:
             return class_source
 
