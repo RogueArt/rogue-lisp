@@ -156,14 +156,14 @@ class ClassDef:
                     initializer_str = member[1]
                     self.interpreter.create_class_def_from_template(initializer_str)
 
-                var_def = self.__create_variable_def_from_field(member)
+                var_def = self.__create_variable_def_from_field(member, self.is_template_class)
                 self.fields.append(var_def)
                 self.field_map[member[2]] = var_def
                 fields_defined_so_far.add(member[2])
 
     # field def: [field typename varname defvalue]
     # returns a VariableDef object that represents that field
-    def __create_variable_def_from_field(self, field_def):
+    def __create_variable_def_from_field(self, field_def, is_template_class=False):
         # Use initial value if provided, 
         # otherwise create a default value for the type
         value = create_default_value(Type(field_def[1]))
@@ -173,14 +173,15 @@ class ClassDef:
         var_def = VariableDef(
             Type(field_def[1]), field_def[2], value
         )
-        if not self.interpreter.check_type_compatibility(
-            var_def.type, var_def.value.type(), True
-        ):
-            self.interpreter.error(
-                ErrorType.TYPE_ERROR,
-                "invalid type/type mismatch with field " + field_def[2],
-                field_def[0].line_num,
-            )
+        if not is_template_class:
+            if not self.interpreter.check_type_compatibility(
+                var_def.type, var_def.value.type(), True
+            ):
+                self.interpreter.error(
+                    ErrorType.TYPE_ERROR,
+                    "invalid type/type mismatch with field " + field_def[2],
+                    field_def[0].line_num,
+                )
         return var_def
 
     def __create_method_list(self, class_body):
