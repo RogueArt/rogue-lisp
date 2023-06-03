@@ -152,7 +152,7 @@ class ClassDef:
 
                 # Check if this is a template class
                 # If it contains @, then it's actually an initializer string!
-                if self.interpreter.is_initializer_str(member[1]):
+                if self.is_template_class and self.interpreter.is_initializer_str(member[1]):
                     initializer_str = member[1]
                     self.interpreter.create_class_def_from_template(initializer_str)
 
@@ -191,7 +191,7 @@ class ClassDef:
             if member[0] == InterpreterBase.METHOD_DEF:
                 # Check if this is a template class
                 # If it contains @, then it's actually an initializer string!
-                if self.interpreter.is_initializer_str(member[1]):
+                if self.is_template_class and self.interpreter.is_initializer_str(member[1]):
                     initializer_str = member[1]
                     self.interpreter.create_class_def_from_template(initializer_str)
 

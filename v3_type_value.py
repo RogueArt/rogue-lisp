@@ -156,8 +156,8 @@ class TypeManager:
     def replace_parameter_strings(self, class_source, template_type, user_provided_type):
         if isinstance(class_source, list):
             return [self.replace_parameter_strings(item, template_type, user_provided_type) for item in class_source]
-        elif isinstance(class_source, str) and class_source == template_type:
-            return user_provided_type
+        elif isinstance(class_source, str) and (class_source == template_type or template_type in class_source):
+            return class_source.replace(template_type, user_provided_type)
         else:
             return class_source
 
