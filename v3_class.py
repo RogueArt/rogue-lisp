@@ -149,6 +149,13 @@ class ClassDef:
                         "duplicate field " + member[2],
                         member[0].line_num,
                     )
+
+                # Check if this is a template class
+                # If it contains @, then it's actually an initializer string!
+                if self.interpreter.is_initializer_str(member[1]):
+                    initializer_str = member[1]
+                    self.interpreter.create_class_def_from_template(initializer_str)
+
                 var_def = self.__create_variable_def_from_field(member)
                 self.fields.append(var_def)
                 self.field_map[member[2]] = var_def
@@ -182,6 +189,12 @@ class ClassDef:
         methods_defined_so_far = set()
         for member in class_body:
             if member[0] == InterpreterBase.METHOD_DEF:
+                # Check if this is a template class
+                # If it contains @, then it's actually an initializer string!
+                if self.interpreter.is_initializer_str(member[1]):
+                    initializer_str = member[1]
+                    self.interpreter.create_class_def_from_template(initializer_str)
+
                 method_def = MethodDef(member)
                 if method_def.method_name in methods_defined_so_far:  # redefinition
                     self.interpreter.error(
