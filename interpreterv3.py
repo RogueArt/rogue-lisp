@@ -44,22 +44,23 @@ class Interpreter(InterpreterBase):
     # if the user tries to new an class name that does not exist. This will report the line number of the statement
     # with the new command
     def instantiate(self, class_name, line_num_of_statement):
-        if class_name not in self.class_index:
+        if class_name not in self.class_index and not self.is_initializer_str(class_name):
             super().error(
                 ErrorType.TYPE_ERROR,
                 f"No class named {class_name} found",
                 line_num_of_statement,
             )
         
-        # Default - assume it's a regular class
-        # Additionally, if template was already used, then it's cached
-        class_def = self.class_index[class_name]
 
         # Check if this is a template class
         # If it contains @, then it's actually an initializer string!
         if self.is_initializer_str(class_name):
             initializer_str = class_name
             class_def = self.create_class_def_from_template(initializer_str)
+        # Default - assume it's a regular class
+        # Additionally, if template was already used, then it's cached
+        else:
+            class_def = self.class_index[class_name]
 
         obj = ObjectDef(
             self, class_def, None, self.trace_output
