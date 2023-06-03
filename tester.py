@@ -150,7 +150,10 @@ test_files = [
     "test_default_locals",
     "test_except1",
     "test_except13",
+    "pisk_except_in_catch",
+    "pisk_nested_try",
     "test_str_ops",
+    "pisk_template_class_only",
     "test_template",
     "test_template1",
     "test_template2",
@@ -169,6 +172,8 @@ test_files = [
 ]
 
 fail_files = [
+    "pisk_test_except1",
+    "pisk_test_except2",
     "test_except4",
     "test_incompat_template_types",
     "test_template10",

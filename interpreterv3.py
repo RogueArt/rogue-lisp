@@ -3,6 +3,7 @@ from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 from v3_object import ObjectDef
 from v3_type_value import TypeManager
+import copy
 
 # need to document that each class has at least one method guaranteed
 
@@ -142,26 +143,36 @@ class Interpreter(InterpreterBase):
                 template_class_initializer.line_num, # TO-DO: Will this work?
             )
 
-        # Recursively find and replace all parameter types in class_source with provided types
+        # Check if this class has already been initialized
+        if template_class_initializer in self.class_index:
+            # If so, then we can just return it
+            return self.class_index[template_class_initializer]
 
         template_class_def = self.type_manager.map_template_class_name_to_class_def[template_class_name]
 
+        # Create a deepcopy of this source
+        # Mutate this so it looks like a real class
+        template_class_source = copy.deepcopy(template_class_def.class_source)
+        template_class_source[0] = InterpreterBase.CLASS_DEF
+        template_class_source[1] = template_class_initializer
+        del template_class_source[2]  # Delete the parameter types
+
+        # Recursively find and replace all parameter types in class_source with provided types
         for x in range(len(provided_types)):
             # Template type = what's in the template class definition already
             template_type = template_class_def.parameter_type_strings[x]
             # Provided type is what the user gave, that we're replacing it with
             provided_type = provided_types[x]
             
-            parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_def.class_source, template_type, provided_type)
+            parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_source, template_type, provided_type)
 
-        # Create a new class definition with the new source
+        # Attach this to the type mananger
+        # Note: there's no super class for this
+        self.type_manager.add_class_type(template_class_initializer, None)
+
+        # Create a new class definition with this new source
         # Note: This class is not a template, so we pass in False
         new_class_def = ClassDef(parametrized_class_source, self)
-        new_class_def.name = template_class_initializer # TO-DO: add accessor method to shield this
-
-        # Attach this to the type manager
-        # Note: there's no super class name for this
-        self.type_manager.add_class_type(template_class_initializer, None)
         self.class_index[template_class_initializer] = new_class_def
 
         return new_class_def    
