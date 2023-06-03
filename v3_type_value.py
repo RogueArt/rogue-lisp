@@ -151,6 +151,15 @@ class TypeManager:
 
         return True
 
+    # Recursive function to do our find and replace 
+    def replace_parameter_strings(self, class_source, provided_type, replacement):
+        if isinstance(class_source, list):
+            return [self.replace_parameter_strings(item, provided_type, replacement) for item in class_source]
+        elif isinstance(class_source, str) and class_source == provided_type:
+            return replacement
+        else:
+            return class_source
+
     # typea and typeb are Type objects
     def check_type_compatibility(self, typea, typeb, for_assignment):
         # if either type is invalid (E.g., the user referenced a class name that doesn't exist) then

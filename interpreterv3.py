@@ -117,6 +117,32 @@ class Interpreter(InterpreterBase):
                 self.type_manager.add_class_type(class_name, superclass_name)
             # Note: we add template class types AFTER provided parameters
 
+    def create_class_def_from_template(self, template_class_initializer):
+        # Process this string
+        template_class_name, provided_types = self.type_manager.split_template_class_initializer(template_class_initializer)
+
+        # Verify that the class is valid
+        if self.type_manager.is_template_class_initializer_str_valid(template_class_initializer):
+            super().error(
+                ErrorType.TYPE_ERROR,
+                f"Invalid template class initializer: {template_class_initializer}",
+                template_class_initializer.line_num, # TO-DO: Will this work?
+            )
+
+        # Recursively find and replace all parameter types in class_source with provided types
+        template_class_def = self.type_manager.map_template_class_name_to_class_def[template_class_name]
+        parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_def.class_source, template_class_def.parameter_types, provided_types)
+
+        # Create a new class definition with the new source
+        # Note: This class is not a template, so we pass in False
+        new_class_def = ClassDef(parametrized_class_source, self)
+
+        # Attach this to the type manager
+        # Note: there's no super class name for this
+        self.type_manager.add_class_type(new_class_def.name, None)
+
+        return new_class_def    
+
 # CODE FOR DEBUGGING PURPOSES ONLY
 if __name__ == "__main__":
     from manual_testing_v3 import get_test_programs
