@@ -251,6 +251,10 @@ class ObjectDef:
     # add all local variables defined in a let to the environment
     def __add_locals_to_env(self, env, var_defs, line_number):
         for var_def in var_defs:
+            # Handle tmeplated class types
+            if self.interpreter.is_initializer_str(var_def[0]):
+                self.interpreter.create_class_def_from_template(var_def[0])
+
             # vardef in the form of (typename varname defvalue)
             var_type = Type(var_def[0])
             var_name = var_def[1]
