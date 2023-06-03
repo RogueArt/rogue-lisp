@@ -36,6 +36,9 @@ class Interpreter(InterpreterBase):
 
         # program terminates!
 
+    def is_initializer_str(self, class_name):
+        return class_name.split(InterpreterBase.TYPE_CONCAT_CHAR)[0] in self.type_manager.map_template_class_name_to_class_def
+
     # user passes in the line number of the statement that performed the new command so we can generate an error
     # if the user tries to new an class name that does not exist. This will report the line number of the statement
     # with the new command
@@ -46,7 +49,17 @@ class Interpreter(InterpreterBase):
                 f"No class named {class_name} found",
                 line_num_of_statement,
             )
+        
+        # Default - assume it's a regular class
+        # Additionally, if template was already used, then it's cached
         class_def = self.class_index[class_name]
+
+        # Check if this is a template class
+        # If it contains @, then it's actually an initializer string!
+        if self.is_initializer_str(class_name):
+            initializer_str = class_name
+            class_def = self.create_class_def_from_template(initializer_str)
+
         obj = ObjectDef(
             self, class_def, None, self.trace_output
         )  # Create an object based on this class definition
