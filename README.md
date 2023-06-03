@@ -1,6 +1,12 @@
 # CS 131 Spring 2023: Project Description
 
 ## Project Status (for TAs)
+
+### Project Status (v3)
+- No known issues / everything works correctly! ("all good!")
+- All local tests pass (31/31)
+- All auto grader tests pass (40/40)
+
 ### Project Status (v2)
 - No known issues / everything works correctly! ("all good!")
 - All local tests pass (224/224)
