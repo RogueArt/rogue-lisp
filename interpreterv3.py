@@ -135,7 +135,7 @@ class Interpreter(InterpreterBase):
         template_class_name, provided_types = self.type_manager.split_template_class_initializer(template_class_initializer)
 
         # Verify that the class is valid
-        if self.type_manager.is_template_class_initializer_str_valid(template_class_initializer):
+        if not self.type_manager.is_template_class_initializer_str_valid(template_class_initializer):
             super().error(
                 ErrorType.TYPE_ERROR,
                 f"Invalid template class initializer: {template_class_initializer}",
@@ -143,16 +143,26 @@ class Interpreter(InterpreterBase):
             )
 
         # Recursively find and replace all parameter types in class_source with provided types
+
         template_class_def = self.type_manager.map_template_class_name_to_class_def[template_class_name]
-        parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_def.class_source, template_class_def.parameter_types, provided_types)
+
+        for x in range(len(provided_types)):
+            # Template type = what's in the template class definition already
+            template_type = template_class_def.parameter_type_strings[x]
+            # Provided type is what the user gave, that we're replacing it with
+            provided_type = provided_types[x]
+            
+            parametrized_class_source = self.type_manager.replace_parameter_strings(template_class_def.class_source, template_type, provided_type)
 
         # Create a new class definition with the new source
         # Note: This class is not a template, so we pass in False
         new_class_def = ClassDef(parametrized_class_source, self)
+        new_class_def.name = template_class_initializer # TO-DO: add accessor method to shield this
 
         # Attach this to the type manager
         # Note: there's no super class name for this
-        self.type_manager.add_class_type(new_class_def.name, None)
+        self.type_manager.add_class_type(template_class_initializer, None)
+        self.class_index[template_class_initializer] = new_class_def
 
         return new_class_def    
 
