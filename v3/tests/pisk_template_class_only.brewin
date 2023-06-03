@@ -1,0 +1,19 @@
+(tclass Foo (field_type_a some_other_type)
+  (method void chatter ((field_type x)) 
+    (call x quack)         # line A
+  )
+
+  # Verify that we DON'T do compile-time type checking
+  (method field_type_a add ((some_other_type a) (some_other_type b)) (
+    (return (+ a b))
+  )
+  )
+)
+
+(class main
+  (method void main () 
+    (begin
+       (print "Template class parsed without error!")
+    )
+  )
+)

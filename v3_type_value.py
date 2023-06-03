@@ -82,6 +82,8 @@ class TypeManager:
         self.map_typename_to_type = {}
         self.__setup_primitive_types()
 
+        self.map_template_class_name_to_class_def = {}
+
     # used to register a new class name (and its supertype name, if present as a valid type so it can be used
     # for type checking.
     # needs to be called the moment we parse the class name and superclass name to enable things like linked lists
@@ -89,6 +91,10 @@ class TypeManager:
     def add_class_type(self, class_name, superclass_name):
         class_type = Type(class_name, superclass_name)
         self.map_typename_to_type[class_name] = class_type
+
+    # Adds this in as a list of strings
+    def add_template_class_type(self, template_class_name, template_class_def):
+        self.map_template_class_name_to_class_def[template_class_name] = template_class_def
 
     def is_valid_type(self, typename):
         return typename in self.map_typename_to_type
@@ -117,6 +123,43 @@ class TypeManager:
             cur_type = (
                 type_info.supertype_name #check suspected supertype is in the inheritance chain
             )  # check the base class of the subtype next
+
+    def split_template_class_initializer(self, template_class_initializer):
+        split_string = template_class_initializer.split(InterpreterBase.TYPE_CONCAT_CHAR)
+        template_class_name = split_string[0]
+        parameter_types = split_string[1:]
+        return template_class_name, parameter_types
+
+    # Input is in format of: e.g. MyTemplateClass@string@foo
+    def is_template_class_initializer_str_valid(self, template_class_initializer):
+        # Process this string
+        template_class_name, provided_types = self.split_template_class_initializer(template_class_initializer)
+
+        # Check if template class exists
+        if template_class_name not in self.map_template_class_name_to_class_def:
+            return False
+        
+        # Check that the number of parameters matches template class
+        template_class = self.map_template_class_name_to_class_def[template_class_name]
+        if len(provided_types) != len(template_class.parameter_type_strings):
+            return False
+
+        # Check that all the provided parameter types are valid
+        for provided_type in provided_types:
+            if not self.is_valid_type(provided_type):
+                return False
+
+        return True
+
+    # TO-DO: Update the naming convention on this
+    # Recursive function to do our find and replace 
+    def replace_parameter_strings(self, class_source, template_type, user_provided_type):
+        if isinstance(class_source, list):
+            return [self.replace_parameter_strings(item, template_type, user_provided_type) for item in class_source]
+        elif isinstance(class_source, str) and class_source == template_type:
+            return user_provided_type
+        else:
+            return class_source
 
     # typea and typeb are Type objects
     def check_type_compatibility(self, typea, typeb, for_assignment):
