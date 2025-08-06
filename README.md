@@ -1,55 +1,65 @@
-# CS 131 Spring 2023: Project Description
+# RogueLisp: Minimalist Lisp Interpreter in Python
 
-## Project Status (for TAs)
+RogueLisp is a fully functional Lisp interpreter built from scratch in Python. Designed for extensibility and clarity, RogueLisp leverages modern object-oriented design patterns to support key language features and make future expansion easy.
 
-### Project Status (v3)
-- No known issues / everything works correctly! ("all good!")
-- All local tests pass (31/31)
-- All auto grader tests pass (40/40)
+## ✨ Features
 
-### Project Status (v2)
-- No known issues / everything works correctly! ("all good!")
-- All local tests pass (224/224)
-- All auto grader tests pass (90/90)
-### Project Status (v1)
+- **Recursive descent parser** for S-expressions, arithmetic, variables, functions, and control flow
+- **Object-oriented architecture:** Each Lisp form and built-in function is represented by a class, using inheritance and polymorphism for dynamic dispatch and clean extensibility
+- **Nested scope management** and first-class functions
+- **Robust error handling** for syntax errors, undefined variables, and arity mismatches
+- **Test-driven development:** Comprehensive unit and integration tests for parser, evaluator, and spec compliance
 
-- No known issues / everything works correctly ("all good!")
-- All local tests (49/49) and autograder tests passing for V1
-## About
+## 🛠️ Technical Highlights
 
-Hey there! This is a template repository that contains the necessary boilerplate
-for [CS 131](https://ucla-cs-131.github.io/spring-23/)'s quarter-long project:
-making an interpreter. The project specs are as follows:
+- Modularized Lexer and Parser for clear separation of concerns
+- Evaluator engine refactored into polymorphic, extensible instruction classes
+- New language constructs can be added by subclassing core AST and evaluation classes
+- Extensive code documentation and examples for users and contributors
 
-1. [Project 1 Spec](https://docs.google.com/document/d/1pPQ2qZKbbsbZGBSwvuy1Ir-NZLPMgVt95WPQuI5aPho)
-2. [Project 2 Spec](https://docs.google.com/document/d/1simlDMO0TK-YNDPYjkuU1C3fcaBpbIVYRaKD1pdqJj8)
+## 📈 Skills Demonstrated
 
-There are three stages to the project; students are currently at the first.
-Thus, this folder contains the necessary bootstrapping code:
+- Interpreter/compiler construction
+- Advanced Python: OOP, inheritance, polymorphism, and modular design
+- Functional programming and recursion
+- Test-driven development and compliance testing
+- Software architecture and extensibility
 
-- `intbase.py`, the base class and enum definitions for the interpreter
-- `bparser.py`, a static `parser` class to parse Brewin programs
+### 🚀 Sample Usage
 
-Some notes on your submission (for Project 1)
+```lisp
+(class person 
+  (field string name "jane")
+  (method void set_name((string n)) (set name n))
+  (method string get_name() (return name))
+)
 
-1. You **must have a top-level, versioned `interpreterv1.py` file** that
-   **exports the `Interpreter` class**. If not, **your code will not run on our
-   autograder**.
-2. You may also submit one or more additional `.py` modules that your
-   interpreter uses, if you decide to break up your solution into multiple `.py`
-   files.
-3. You **should not modify/submit `intbase.py` or `bparser.py`**; we will use
-   our own when grading.
+(class student inherits person
+  (field int beers 3)
+  (field string student_name "studentname")
+  (method void set_beers((int g)) (set beers g))
+  (method int get_beers() (return beers))
+  (method string get_name() (return student_name))
+)
 
-You can find out more about our autograder, including how to run it, in
-[its accompanying repo](https://github.com/UCLA-CS-131/spring-23-autograder).
+(class main
+  (field student s null)
+  (method void main () 
+    (begin 
+      (set s (new student))
+      (print (call s get_name))
+    )
+  )
+)
 
-## Licensing and Attribution
+# Output:
+# "jane"
+```
 
-This is an unlicensed repository; even though the source code is public, it is
-**not** governed by an open-source license.
+## 📚 Project Motivation
 
-This code was primarily written by
-[Carey Nachenberg](http://careynachenberg.weebly.com/), with support from his
-TAs for the
-[Spring 2023 iteration of CS 131](https://ucla-cs-131.github.io/spring-23/).
+RogueLisp was built to deeply explore interpreter design, functional programming, and language architecture. All parsing, evaluation, environment, and OOP logic were engineered from scratch, with extensibility and clean design as guiding principles.
+
+## 📦 Repository
+
+See [pull requests](https://github.com/RogueArt/rogue-lisp/pulls?q=is%3Apr+is%3Aclosed) for implementation milestones and new feature expansions.
